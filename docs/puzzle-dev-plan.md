@@ -9,8 +9,8 @@
 | 里程碑 | 內容 | 預估天數 | 狀態 |
 |--------|------|----------|------|
 | M1 | 規格定義與資料模型 | 1 天 | ✅ 完成 |
-| M2 | LevelSystem puzzle 化 | 2 天 | ⬅️ 下一步 |
-| M3 | 發射次數與 Par 判定 | 1~2 天 | 待辦 |
+| M2 | LevelSystem puzzle 化 | 2 天 | ✅ 完成 |
+| M3 | 發射次數與 Par 判定 | 1~2 天 | ⬅️ 下一步 |
 | M4 | 通關／失敗條件 | 1~2 天 | 待辦 |
 | M5 | UI/UX | 1~2 天 | 待辦 |
 | M6 | 測試與關卡內容生產 | 2 天+ | 待辦 |
@@ -52,7 +52,7 @@ interface PuzzleLevel {
 
 ---
 
-## M2 — LevelSystem Puzzle 化（2 天）⬅️ 下一步
+## M2 — LevelSystem Puzzle 化（2 天）✅ 完成
 
 **目標**：Puzzle 模式走固定版圖，關閉動態新增行。
 
@@ -93,10 +93,10 @@ interface PuzzleLevel {
 - `null` 表示該格為空
 
 **驗收標準**
-- [ ] JSON 格式合法，可被 `JSON.parse` 解析
-- [ ] 偶數列項目數 ≤ 13、奇數列項目數 ≤ 12
-- [ ] 所有非 null 值皆為合法的 `BubbleType`（`red` / `green` / `blue` / `yellow`）
-- [ ] `shotSequence` 非空陣列
+- [x] JSON 格式合法，可被 `JSON.parse` 解析
+- [x] 偶數列項目數 ≤ 13、奇數列項目數 ≤ 12
+- [x] 所有非 null 值皆為合法的 `BubbleType`（`red` / `green` / `blue` / `yellow`）
+- [x] `shotSequence` 非空陣列
 
 ---
 
@@ -116,9 +116,9 @@ export function loadPuzzleLevel(id: number): PuzzleLevelData { ... }
 載入器直接 `import` JSON，並在 runtime 驗證結構（偶數列 ≤13 項，奇數列 ≤12 項）。
 
 **驗收標準**
-- [ ] `loadPuzzleLevel(1)` 回傳物件結構符合 `PuzzleLevelData` 介面
-- [ ] 傳入非法資料（列長度超出）時拋出明確錯誤訊息
-- [ ] `npm run types` 無 TS 型別錯誤
+- [x] `loadPuzzleLevel(1)` 回傳物件結構符合 `PuzzleLevelData` 介面
+- [x] 傳入非法資料（列長度超出）時拋出明確錯誤訊息
+- [x] `npm run types` 無 TS 型別錯誤
 
 ---
 
@@ -169,10 +169,10 @@ private _createPuzzleLevel(data: PuzzleLevelData) {
 `reset()` 中清空序列：`this.puzzleShotSequence = [];`
 
 **驗收標準**
-- [ ] Puzzle 模式重啟兩次，視覺盤面（格子位置與顏色）完全一致
-- [ ] `puzzleShotSequence` 長度與 JSON 的 `shotSequence` 相符
-- [ ] Endless 模式盤面仍為隨機（不受影響）
-- [ ] `reset()` 後 `puzzleShotSequence` 清空為空陣列
+- [x] Puzzle 模式重啟兩次，視覺盤面（格子位置與顏色）完全一致
+- [x] `puzzleShotSequence` 長度與 JSON 的 `shotSequence` 相符
+- [x] Endless 模式盤面仍為隨機（不受影響）
+- [x] `reset()` 後 `puzzleShotSequence` 清空為空陣列
 
 ---
 
@@ -197,8 +197,8 @@ if (!this._allowNewLine && this.game.mode !== 'puzzle') {
 `_allowNewLine` 在 puzzle 模式永遠不會被設為 `true`，遞迴自動失效。
 
 **驗收標準**
-- [ ] Puzzle 模式連射 10 球以上，`this.lines.length` 不增加
-- [ ] Endless 模式新列仍正常出現（不受影響）
+- [x] Puzzle 模式連射 10 球以上，`this.lines.length` 不增加
+- [x] Endless 模式新列仍正常出現（不受影響）
 
 ---
 
@@ -221,9 +221,9 @@ private _newBubble() {
 ```
 
 **驗收標準**
-- [ ] Puzzle 模式下，兩次遊戲出球顏色順序與 `shotSequence` 完全一致
-- [ ] `_puzzleShotIndex` 在 `reset()` 後歸零，重玩時序列從頭開始
-- [ ] Endless 模式出球仍為隨機（不受影響）
+- [x] Puzzle 模式下，兩次遊戲出球顏色順序與 `shotSequence` 完全一致
+- [x] `_puzzleShotIndex` 在 `reset()` 後歸零，重玩時序列從頭開始
+- [x] Endless 模式出球仍為隨機（不受影響）
 
 ---
 
@@ -243,13 +243,13 @@ M2.4 (關閉新增列) — 獨立，可與 M2.3 並行
 
 ### 驗收標準
 
-- [ ] 同一關卡每次進入版圖與出球序列完全一致
-- [ ] puzzle mode 遊戲過程中不會新增任何隨機泡泡（含補線與砲台補彈）
-- [ ] 非 puzzle 模式行為不受影響
+- [x] 同一關卡每次進入版圖與出球序列完全一致
+- [x] puzzle mode 遊戲過程中不會新增任何隨機泡泡（含補線與砲台補彈）
+- [x] 非 puzzle 模式行為不受影響
 
 ---
 
-## M3 — 發射次數與 Par 判定（1~2 天）
+## M3 — 發射次數與 Par 判定（1~2 天）⬅️ 下一步
 
 **目標**：建立 puzzle 模式核心 KPI。
 
