@@ -18,6 +18,7 @@ import { EffectsSystem } from './EffectsSystem';
 import { PauseSystem, Tween } from './PauseSystem';
 import { PhysicsSystem } from './PhysicsSystem';
 import { PowerSystem } from './PowerSystem';
+import { puzzleLevels } from '../puzzle/puzzleLevels';
 
 export class LevelSystem implements System {
     /**
@@ -187,7 +188,74 @@ export class LevelSystem implements System {
     }
 
     /** Create the initial bubble grid */
+
+    /** Creates a puzzle level based on the current level ID. */
+    private _createPuzzleLevel() {
+        // Prevent a new line from spawning
+        this._allowNewLine = false;
+
+        // Find the puzzle level based on the stats, defaulting to the first level
+        const levelId = this.game.stats.get('levelId');
+        const levelData = puzzleLevels.find((l) => l.levelId === levelId) || puzzleLevels[0];
+
+        // Store puzzle stats
+        this.game.stats.set('parShots', levelData.parShots);
+        this.game.stats.set('shotsFired', 0);
+
+        const { grid } = levelData;
+        const count = grid.length;
+
+        // grid[0] is j=0. Higher indices are higher j.
+        // We can just add lines to the bottom iteratively using addLine(false), since initially lines[] is empty.
+        // The first addLine(false) will get bottomLine.j + 1 -> wait, if lines[] is empty, getLine('bottom') will throw or return undefined.
+        // Let's look at getLine('bottom'): return this.lines[this.lines.length - 1];
+        // If this.lines is empty, it returns undefined. Then bottomLine.j will throw!
+        // To fix this, let's manually construct lines or use addLine(true) to build top-down!
+        // If we use addLine(true), the first line we add gets j=0. Then we add another, it gets j=0 and shifts the first to j=1.
+        // So we can iterate grid from top to bottom (grid.length - 1 down to 0) and use addLine(true, 0) but remove its random bubbles!
+
+        // Actually, the easiest and safest way to build the grid without side-effects is:
+        for (let j = 0; j < count; j++) {
+            const even = j % 2 === 0; // j=0 is even, j=1 is odd
+            const line = pool.get(BubbleLine);
+            line.init(j, this.game, even);
+            line.y = boardConfig.screenTop + boardConfig.bubbleSize * j;
+            this.lines.push(line);
+
+            const rowConfig = grid[j];
+            const startingI = even ? 0 : 1;
+            let layoutIndex = 0;
+
+            for (let i = startingI; i <= MAX_BUBBLE_INDEX; i += 2) {
+                if (layoutIndex < rowConfig.length) {
+                    const bubbleType = rowConfig[layoutIndex];
+                    if (bubbleType !== null && bubbleType !== undefined) {
+                        this._spawnBubbleCount++;
+                        const bubble = this._createGridBubble(bubbleType, i, j);
+                        line.addBubble(bubble, this.calculateBubbleX(bubble));
+                        this._gridContainer.addChild(bubble.view);
+                    }
+                }
+                layoutIndex++;
+            }
+        }
+
+        // Hide the grid container and move it above, out of view
+        this._gridContainer.alpha = 0;
+        this._gridContainer.y = -count * boardConfig.bubbleSize;
+
+        // Loop through the new lines and reset their position ratio
+        this.lines.forEach((line) => {
+            line.updatePosRatio(1);
+        });
+    }
+
     public createLevel() {
+        if (this.game.mode === 'puzzle') {
+            this._createPuzzleLevel();
+            return;
+        }
+
         // Populating grid
         const count = this.startingLines;
 
@@ -1040,6 +1108,12 @@ export class LevelSystem implements System {
      * @returns A special bubble type if one is to be generated, or `null` if none should be generated.
      */
     private _getSpecialType() {
+        if (this.game.mode === 'puzzle') {
+            const levelId = this.game.stats.get('levelId');
+            const levelData = puzzleLevels.find((l) => l.levelId === levelId) || puzzleLevels[0];
+            if (!levelData.allowedSpecials) return null;
+        }
+
         const bubblesEvery = boardConfig.specialBubbleEvery;
         const bubblesChance = boardConfig.specialBubbleChance;
 

@@ -15,6 +15,7 @@ import type { System } from '../SystemRunner';
 import { HudSystem } from './HudSystem';
 import { LevelSystem } from './LevelSystem';
 import { PhysicsSystem } from './PhysicsSystem';
+import { puzzleLevels } from '../puzzle/puzzleLevels';
 
 /** A system that handles the cannon interactions in the game. */
 export class CannonSystem implements System {
@@ -56,6 +57,8 @@ export class CannonSystem implements System {
     private readonly _cannonForward = new Point();
     /** The number of shot projectiles. */
     private _shotProjectiles = 0;
+    /** The index tracker for the puzzle queue. */
+    private _puzzleQueueIndex = 0;
 
     /** Called when the system is added to the game. */
     public init() {
@@ -122,6 +125,7 @@ export class CannonSystem implements System {
         // Reset rotation of cannon and reset projectile shot count
         this.cannon.rotation = 0;
         this._shotProjectiles = 0;
+        this._puzzleQueueIndex = 0;
         this._projectile = null;
     }
 
@@ -281,6 +285,24 @@ export class CannonSystem implements System {
      * @returns The generated bubble type.
      */
     private _newBubble() {
+        if (this.game.mode === 'puzzle') {
+            const levelId = this.game.stats.get('levelId');
+            const levelData = puzzleLevels.find((l) => l.levelId === levelId) || puzzleLevels[0];
+
+            if (levelData.queue && levelData.queue.length > 0) {
+                // Determine what bubble is next based on the queue
+                // If the queue runs out, we will loop it or just fall back.
+                // Let's fallback to looping the queue to be safe, or just random.
+                // The specs don't explicitly say what happens when queue runs out.
+                // It's safest to just fallback to the normal generation.
+                if (this._puzzleQueueIndex < levelData.queue.length) {
+                    const type = levelData.queue[this._puzzleQueueIndex];
+                    this._puzzleQueueIndex++;
+                    return type;
+                }
+            }
+        }
+
         const levelSystem = this.game.systems.get(LevelSystem);
 
         // Create a new instance of a map and copy the level system's countPerType map

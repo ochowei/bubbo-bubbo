@@ -15,6 +15,12 @@ const DEFAULT_STATS = {
     bestCombo: 0,
     /** How many powerups have been triggered */
     powerupsUsed: 0,
+    /** The current puzzle level ID */
+    levelId: 1,
+    /** How many shots have been fired in the current puzzle level */
+    shotsFired: 0,
+    /** Par shots for the current puzzle level */
+    parShots: 0,
 };
 
 /** Type defined from the default data. */
