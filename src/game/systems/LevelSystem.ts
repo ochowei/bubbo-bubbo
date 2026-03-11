@@ -12,6 +12,8 @@ import { BubbleLine, MAX_BUBBLE_INDEX } from '../entities/BubbleLine';
 import type { PhysicsBody } from '../entities/PhysicsBody';
 import type { Game } from '../Game';
 import { pool } from '../Pool';
+import type { PuzzleLevel } from '../puzzle/types';
+import { puzzleLevels } from '../puzzle/puzzleLevels';
 import type { System } from '../SystemRunner';
 import { AimSystem } from './AimSystem';
 import { EffectsSystem } from './EffectsSystem';
@@ -35,6 +37,8 @@ export class LevelSystem implements System {
     public countPerType = new Map<BubbleType, number>();
     /** An array containing all the lines in the grid. */
     public readonly lines: BubbleLine[] = [];
+    /** The active puzzle level when running in puzzle mode, null otherwise. */
+    public currentPuzzleLevel: PuzzleLevel | null = null;
 
     /** A set of signals that other systems can access. */
     public signals = {
@@ -132,6 +136,9 @@ export class LevelSystem implements System {
         // Prevent a new line before the game is ready
         this._allowNewLine = false;
 
+        // Clear puzzle level reference
+        this.currentPuzzleLevel = null;
+
         // Clear grid data
         this.clearLevel();
     }
@@ -188,6 +195,16 @@ export class LevelSystem implements System {
 
     /** Create the initial bubble grid */
     public createLevel() {
+        if (this.game.mode === 'puzzle') {
+            // Puzzle mode: load fixed grid from puzzle level data (default to first level for M2)
+            const level = puzzleLevels[0];
+
+            this.currentPuzzleLevel = level;
+            this._createPuzzleLevel(level);
+
+            return;
+        }
+
         // Populating grid
         const count = this.startingLines;
 
@@ -201,6 +218,62 @@ export class LevelSystem implements System {
         this._gridContainer.y = -count * boardConfig.bubbleSize;
 
         // Loop through the new lines and reset their position ratio
+        this.lines.forEach((line) => {
+            line.updatePosRatio(1);
+        });
+    }
+
+    /**
+     * Build the fixed grid for a puzzle level.
+     *
+     * Coordinate mapping:
+     *   - The puzzle's `grid` array is ordered bottom-up: grid[0] = row closest to the cannon,
+     *     grid[grid.length - 1] = ceiling anchor row.
+     *   - The engine uses j=0 for the ceiling and increasing j toward the cannon.
+     *   - We reverse the mapping so that engine j = gridRows - 1 - k for puzzle grid[k],
+     *     placing the ceiling anchor at engine j=0.
+     *   - i-slot assignment follows engine_j parity:
+     *       even engine_j → i = element_index * 2
+     *       odd  engine_j → i = element_index * 2 + 1
+     */
+    private _createPuzzleLevel(level: PuzzleLevel) {
+        const gridRows = level.grid.length;
+
+        for (let engineJ = 0; engineJ < gridRows; engineJ++) {
+            const isEven = engineJ % 2 === 0;
+
+            // Create a BubbleLine directly (no animation, no random bubbles)
+            const line = pool.get(BubbleLine);
+
+            line.init(engineJ, this.game, isEven);
+            line.y = boardConfig.screenTop + boardConfig.bubbleSize * engineJ;
+            this.lines.push(line);
+
+            // Reverse-map to puzzle grid index so ceiling data lands at j=0
+            const puzzleGridIndex = gridRows - 1 - engineJ;
+            const rowData = level.grid[puzzleGridIndex];
+
+            for (let c = 0; c < rowData.length; c++) {
+                const type = rowData[c];
+
+                if (type === null) continue;
+                // Skip special bubbles when not allowed by this level
+                if (!level.allowedSpecials && isSpecialType(type)) continue;
+
+                const i = isEven ? c * 2 : c * 2 + 1;
+
+                this._spawnBubbleCount++;
+                const bubble = this._createGridBubble(type, i, engineJ);
+
+                line.addBubble(bubble, this.calculateBubbleX(bubble));
+                this._gridContainer.addChild(bubble.view);
+            }
+        }
+
+        // Hide and offset the grid container so start() can animate it onto screen
+        this._gridContainer.alpha = 0;
+        this._gridContainer.y = -gridRows * boardConfig.bubbleSize;
+
         this.lines.forEach((line) => {
             line.updatePosRatio(1);
         });
@@ -557,8 +630,9 @@ export class LevelSystem implements System {
         // Add the shimmer tween to the pause system
         pause.addTween(tween);
 
-        // Start adding new lines once the first bubble has connected
-        if (!this._allowNewLine) {
+        // Start adding new lines once the first bubble has connected.
+        // In puzzle mode _allowNewLine stays false permanently — no dynamic rows.
+        if (!this._allowNewLine && this.game.mode !== 'puzzle') {
             this._allowNewLine = true;
             this.addLineToGridTop();
         }

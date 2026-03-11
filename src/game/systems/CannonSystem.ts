@@ -56,6 +56,10 @@ export class CannonSystem implements System {
     private readonly _cannonForward = new Point();
     /** The number of shot projectiles. */
     private _shotProjectiles = 0;
+    /** Index into the current puzzle level's fixed shot queue (puzzle mode only). */
+    private _puzzleQueueIndex = 0;
+    /** True once the puzzle queue is exhausted and firing should be blocked. */
+    private _puzzleQueueExhausted = false;
 
     /** Called when the system is added to the game. */
     public init() {
@@ -123,6 +127,9 @@ export class CannonSystem implements System {
         this.cannon.rotation = 0;
         this._shotProjectiles = 0;
         this._projectile = null;
+        // Reset puzzle queue state
+        this._puzzleQueueIndex = 0;
+        this._puzzleQueueExhausted = false;
     }
 
     /** The x-position of the cannon in game space. */
@@ -160,6 +167,9 @@ export class CannonSystem implements System {
     private _fire(e: FederatedPointerEvent) {
         // If a projectile already exists, return and do not fire another
         if (this._projectile) return;
+
+        // In puzzle mode, block firing once the fixed shot queue is exhausted
+        if (this._puzzleQueueExhausted) return;
 
         // Play audio at reduced speed to simulate a different sound, easy way to get multiple sfx out of one file
         sfx.play('audio/bubble-land-sfx.wav', {
@@ -278,10 +288,25 @@ export class CannonSystem implements System {
 
     /**
      * Generate a new bubble type based on the chances of each type from the LevelSystem's countPerType map.
+     * In puzzle mode with a fixed queue, consume the queue in order.
      * @returns The generated bubble type.
      */
     private _newBubble() {
         const levelSystem = this.game.systems.get(LevelSystem);
+
+        // Puzzle mode: serve shots from the fixed queue when one is defined
+        if (this.game.mode === 'puzzle' && levelSystem.currentPuzzleLevel?.queue) {
+            const queue = levelSystem.currentPuzzleLevel.queue;
+
+            if (this._puzzleQueueIndex < queue.length) {
+                return queue[this._puzzleQueueIndex++];
+            }
+
+            // Queue exhausted — block further firing and return last type as placeholder
+            this._puzzleQueueExhausted = true;
+
+            return queue[queue.length - 1];
+        }
 
         // Create a new instance of a map and copy the level system's countPerType map
         const chancesPerType = new Map(levelSystem.countPerType);
