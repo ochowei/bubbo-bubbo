@@ -27,5 +27,6 @@ export const i18nDict = {
     modeTimeAttack: 'TIME ATTACK',
     modeTimeAttackDesc: 'Race against the clock!\nPop as many as you can in time.',
     modePuzzle: 'PUZZLE',
+    modeBack: 'BACK',
     modePuzzleDesc: 'Clear every bubble from the board.\nThink before you shoot!',
 };

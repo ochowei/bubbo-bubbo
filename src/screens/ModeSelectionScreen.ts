@@ -7,6 +7,7 @@ import { navigation } from '../navigation';
 import { SecondaryButton } from '../ui/buttons/SecondaryButton';
 import { i18n } from '../utils/i18n';
 import { GameScreen } from './GameScreen';
+import { TitleScreen } from './TitleScreen';
 
 /** The game modes available for selection. */
 export type GameMode = 'endless' | 'time-attack' | 'puzzle';
@@ -40,6 +41,7 @@ export class ModeSelectionScreen extends Container implements AppScreen {
     private readonly _timeAttackDesc: Text;
     private readonly _puzzleBtn: SecondaryButton;
     private readonly _puzzleDesc: Text;
+    private readonly _backBtn: SecondaryButton;
 
     /** Container animated in from the top */
     private readonly _topAnimContainer = new Container();
@@ -84,7 +86,11 @@ export class ModeSelectionScreen extends Container implements AppScreen {
         this.bindHoverDescription(this._endlessBtn, this._endlessDesc);
 
         // Time Attack
-        this._timeAttackBtn = new SecondaryButton({ text: i18n.t('modeTimeAttack'), tint: 0xffca42 });
+        this._timeAttackBtn = new SecondaryButton({
+            text: i18n.t('modeTimeAttack'),
+            tint: 0xffca42,
+            textStyle: { fontSize: 33 },
+        });
         this._timeAttackBtn.onPress.connect(() => {
             navigation.goToScreen(GameScreen, { mode: 'time-attack' as GameMode });
         });
@@ -103,6 +109,15 @@ export class ModeSelectionScreen extends Container implements AppScreen {
         this._puzzleDesc.visible = false;
         this.bindHoverDescription(this._puzzleBtn, this._puzzleDesc);
 
+        this._backBtn = new SecondaryButton({
+            text: i18n.t('modeBack'),
+            tint: 0xbcbcbc,
+            textStyle: { fontSize: 26 },
+        });
+        this._backBtn.onPress.connect(() => {
+            navigation.goToScreen(TitleScreen);
+        });
+
         this._bottomAnimContainer.addChild(
             this._endlessBtn,
             this._endlessDesc,
@@ -110,6 +125,7 @@ export class ModeSelectionScreen extends Container implements AppScreen {
             this._timeAttackDesc,
             this._puzzleBtn,
             this._puzzleDesc,
+            this._backBtn,
         );
 
         this.addChild(this._topAnimContainer, this._bottomAnimContainer);
@@ -190,5 +206,8 @@ export class ModeSelectionScreen extends Container implements AppScreen {
         this._puzzleBtn.y = groupTop + rowHeight * 2;
         this._puzzleDesc.x = cx + descOffsetX;
         this._puzzleDesc.y = groupTop + rowHeight * 2;
+
+        this._backBtn.x = 110;
+        this._backBtn.y = h - 45;
     }
 }
