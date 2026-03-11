@@ -30,9 +30,7 @@ export function loadPuzzleLevel(id: number): PuzzleLevelData {
         const maxItems = j % 2 === 0 ? 13 : 12;
 
         if (row.length > maxItems) {
-            throw new Error(
-                `puzzle-level-${id}.json: row ${j} has ${row.length} items but the maximum is ${maxItems}`,
-            );
+            throw new Error(`puzzle-level-${id}.json: row ${j} has ${row.length} items but the maximum is ${maxItems}`);
         }
     });
 
