@@ -239,6 +239,9 @@ export class HudSystem implements System {
         } else if (mode === 'endless') {
             this._modeTitleText.text = i18n.t('modeEndless');
             this._modeTitleText.visible = true;
+        } else if (mode === 'puzzle') {
+            this._modeTitleText.text = i18n.t('modePuzzle');
+            this._modeTitleText.visible = true;
         } else {
             this._modeTitleText.visible = false;
         }

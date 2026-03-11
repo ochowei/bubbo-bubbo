@@ -205,24 +205,26 @@ export class LevelSystem implements System {
         const { grid } = levelData;
         const count = grid.length;
 
-        // grid[0] is j=0. Higher indices are higher j.
-        // We can just add lines to the bottom iteratively using addLine(false), since initially lines[] is empty.
-        // The first addLine(false) will get bottomLine.j + 1 -> wait, if lines[] is empty, getLine('bottom') will throw or return undefined.
-        // Let's look at getLine('bottom'): return this.lines[this.lines.length - 1];
-        // If this.lines is empty, it returns undefined. Then bottomLine.j will throw!
-        // To fix this, let's manually construct lines or use addLine(true) to build top-down!
-        // If we use addLine(true), the first line we add gets j=0. Then we add another, it gets j=0 and shifts the first to j=1.
-        // So we can iterate grid from top to bottom (grid.length - 1 down to 0) and use addLine(true, 0) but remove its random bubbles!
-
-        // Actually, the easiest and safest way to build the grid without side-effects is:
-        for (let j = 0; j < count; j++) {
-            const even = j % 2 === 0; // j=0 is even, j=1 is odd
+        // grid[0] is the bottom row (j=0).
+        // Since we want the grid at the top of the board to drop down,
+        // and j=0 should be the lowest row, we need to place j=0 at y = screenTop + bubbleSize * (count - 1).
+        // Standard `addLine` sets line.y = boardConfig.screenTop + boardConfig.bubbleSize * line.j.
+        // This means higher j means lower on the screen (larger y).
+        // So grid[0] (bottom) should get j = count - 1.
+        // grid[count - 1] (ceiling) should get j = 0.
+        for (let idx = 0; idx < count; idx++) {
+            const j = count - 1 - idx; // Reverse mapping: grid[0] -> j=count-1
+            const even = j % 2 === 0;
             const line = pool.get(BubbleLine);
             line.init(j, this.game, even);
             line.y = boardConfig.screenTop + boardConfig.bubbleSize * j;
-            this.lines.push(line);
 
-            const rowConfig = grid[j];
+            // Push to the array. Note: lines array should be sorted by j.
+            // Since idx goes from 0 to count-1, j goes from count-1 down to 0.
+            // So we should unshift to keep lines[0] as j=0.
+            this.lines.unshift(line);
+
+            const rowConfig = grid[idx];
             const startingI = even ? 0 : 1;
             let layoutIndex = 0;
 
