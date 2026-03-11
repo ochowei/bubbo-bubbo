@@ -92,6 +92,12 @@ interface PuzzleLevel {
 - 偶數 index 列：13 項；奇數 index 列：12 項
 - `null` 表示該格為空
 
+**驗收標準**
+- [ ] JSON 格式合法，可被 `JSON.parse` 解析
+- [ ] 偶數列項目數 ≤ 13、奇數列項目數 ≤ 12
+- [ ] 所有非 null 值皆為合法的 `BubbleType`（`red` / `green` / `blue` / `yellow`）
+- [ ] `shotSequence` 非空陣列
+
 ---
 
 ### M2.2 — 型別定義與載入器（`src/game/puzzle/PuzzleLevel.ts`）
@@ -108,6 +114,11 @@ export function loadPuzzleLevel(id: number): PuzzleLevelData { ... }
 ```
 
 載入器直接 `import` JSON，並在 runtime 驗證結構（偶數列 ≤13 項，奇數列 ≤12 項）。
+
+**驗收標準**
+- [ ] `loadPuzzleLevel(1)` 回傳物件結構符合 `PuzzleLevelData` 介面
+- [ ] 傳入非法資料（列長度超出）時拋出明確錯誤訊息
+- [ ] `npm run types` 無 TS 型別錯誤
 
 ---
 
@@ -157,6 +168,12 @@ private _createPuzzleLevel(data: PuzzleLevelData) {
 
 `reset()` 中清空序列：`this.puzzleShotSequence = [];`
 
+**驗收標準**
+- [ ] Puzzle 模式重啟兩次，視覺盤面（格子位置與顏色）完全一致
+- [ ] `puzzleShotSequence` 長度與 JSON 的 `shotSequence` 相符
+- [ ] Endless 模式盤面仍為隨機（不受影響）
+- [ ] `reset()` 後 `puzzleShotSequence` 清空為空陣列
+
 ---
 
 ### M2.4 — 關閉 Puzzle 模式的動態新增列
@@ -179,6 +196,10 @@ if (!this._allowNewLine && this.game.mode !== 'puzzle') {
 
 `_allowNewLine` 在 puzzle 模式永遠不會被設為 `true`，遞迴自動失效。
 
+**驗收標準**
+- [ ] Puzzle 模式連射 10 球以上，`this.lines.length` 不增加
+- [ ] Endless 模式新列仍正常出現（不受影響）
+
 ---
 
 ### M2.5 — CannonSystem 使用固定出球序列
@@ -198,6 +219,11 @@ private _newBubble() {
     // ... 以下維持原有隨機邏輯不變
 }
 ```
+
+**驗收標準**
+- [ ] Puzzle 模式下，兩次遊戲出球顏色順序與 `shotSequence` 完全一致
+- [ ] `_puzzleShotIndex` 在 `reset()` 後歸零，重玩時序列從頭開始
+- [ ] Endless 模式出球仍為隨機（不受影響）
 
 ---
 
