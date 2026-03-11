@@ -56,19 +56,28 @@ interface PuzzleLevel {
 
 **目標**：Puzzle 模式走固定版圖，關閉動態新增行。
 
+### 固定關卡來源與無新泡泡策略
+
+- puzzle mode 先固定讀取 `src/game/puzzle/puzzleLevels.ts` 的單一關卡來源（例如 `levelId = 1`，或由 `Game` 帶入但預設固定值）。
+- 每次進入 puzzle mode 都載入同一筆 `PuzzleLevel`，確保初始盤面與流程可重現。
+- 若 `PuzzleLevel.queue` 存在：僅消耗該固定序列；耗盡後不再生成新 bubble（可鎖發射，或回傳 `empty` 並觸發失敗／提示，需選定一種行為並固定）。
+- 若 `PuzzleLevel.queue` 不存在：明確禁止 `CannonSystem` 在 puzzle mode 呼叫 `_newBubble()`，避免任何隨機補彈。
+
 ### 修改範圍
 
 **`src/game/systems/LevelSystem.ts`**
 
 - `start()` 或 `createLevel()` 增加 `if (game.mode === 'puzzle')` 分支
   - 讀取 `puzzleLevels[levelId]`
-  - 以關卡 `grid` 逐格呼叫 `setBubble(...)`
-  - 設定 `_allowNewLine = false`（已存在此 flag，直接使用）
+  - `createLevel()` 的 puzzle 分支僅依 `PuzzleLevel.grid` 逐格呼叫 `setBubble(...)` 建盤，不呼叫任何隨機補線流程
+  - `_allowNewLine` 在 puzzle mode 全程維持 `false`（已存在此 flag，直接使用），避免動態加行
   - 若 `allowedSpecials === false`，跳過 special bubble 的隨機生成
 
-**`src/game/systems/CannonSystem.ts`**（若使用 `queue`）
+**`src/game/systems/CannonSystem.ts`**
 
-- `_generateNextBubble()` 增加分支：若 puzzle 模式有固定 `queue`，依序讀取而非隨機加權
+- `_generateNextBubble()` 增加 puzzle 分支：
+  - 若有固定 `queue`，依序讀取而非隨機加權，且耗盡後不再產生新 bubble（鎖發射或回傳 `empty` 並觸發失敗／提示）
+  - 若無 `queue`，明確禁止 puzzle 模式走 `_newBubble()` 隨機生成路徑
 
 ### 不改動項目
 
@@ -77,7 +86,9 @@ interface PuzzleLevel {
 
 ### 驗收標準
 
-- [ ] 同一關卡 ID 每次進入都呈現相同版圖與開局泡泡
+- [ ] 同一關卡每次進入版圖與出球序列完全一致
+- [ ] puzzle mode 遊戲過程中不會新增任何隨機泡泡（含補線與砲台補彈）
+- [ ] queue 耗盡後行為符合規格（不可再射擊或有明確結束條件）
 - [ ] 非 puzzle 模式行為不受影響
 - [ ] 若 `allowedSpecials: false`，格子內確實無 special bubble
 
