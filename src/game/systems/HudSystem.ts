@@ -1,5 +1,5 @@
 import gsap from 'gsap';
-import { Container, Graphics, NineSliceSprite, Sprite, Texture } from 'pixi.js';
+import { Container, Graphics, NineSliceSprite, Sprite, Text, Texture } from 'pixi.js';
 
 import { IconButton } from '../../ui/buttons/IconButton';
 import { HelperPanel } from '../../ui/HelperPanel';
@@ -49,6 +49,12 @@ export class HudSystem implements System {
     private _pauseButton!: IconButton;
     private _scoreCounter!: ScoreCounter;
     private _helperPanel!: HelperPanel;
+    private _timerCounter!: Text;
+
+    /** Current game mode. */
+    private _mode = 'endless';
+    /** Remaining time in time-attack mode, in seconds. */
+    private _timeRemaining = 60;
 
     /** The mask is used to keep visual elements from rendering outside of the given game bounds */
     private _mask!: Graphics;
@@ -104,6 +110,19 @@ export class HudSystem implements System {
         // Create the score bar
         this._scoreCounter = new ScoreCounter();
 
+        // Create the time counter (shown only in time-attack mode)
+        this._timerCounter = new Text({
+            text: '60',
+            style: {
+                fontFamily: 'Bungee-Regular',
+                fontSize: 42,
+                fill: 0xffffff,
+                align: 'center',
+            },
+        });
+        this._timerCounter.anchor.set(0.5, 0.5);
+        this._timerCounter.visible = false;
+
         // Create the visual representation of the left bounds
         this._leftBorder = new NineSliceSprite({ texture: Texture.from('game-side-border') });
         this._leftBorder.x = -(designConfig.content.width * 0.5) - this._leftBorder.width;
@@ -150,6 +169,7 @@ export class HudSystem implements System {
         this._gameHudContainer.addChild(
             this._bottomTray,
             this._scoreCounter.view,
+            this._timerCounter,
             this._laserLine.view,
             this._helperPanel.view,
             this.cannonContainer,
@@ -168,6 +188,12 @@ export class HudSystem implements System {
         });
     }
 
+    /** Sets the game mode so HUD can enable or disable mode-specific UI. */
+    public setMode(mode: string) {
+        this._mode = mode;
+        this._timerCounter.visible = mode === 'time-attack';
+    }
+
     /** Called prior to the `start` function at the beginning of the game. */
     public awake() {
         // Move the tutorial popout to outside the screen
@@ -176,6 +202,11 @@ export class HudSystem implements System {
         this._topTrayOffsetRatio = 0;
         // Set the panel back to the top of the screen
         this._updateTopTrayHeight();
+        // Reset timer state for time-attack mode
+        this._timeRemaining = 60;
+        this._timerCounter.text = `${Math.ceil(this._timeRemaining)}`;
+        this._timerCounter.visible = this._mode === 'time-attack';
+
         // Show the game hud
         this._gameHudContainer.visible = true;
     }
@@ -251,6 +282,15 @@ export class HudSystem implements System {
     public update(delta: number) {
         // Update laser line
         this._laserLine.update(delta);
+
+        if (this._mode !== 'time-attack') return;
+
+        this._timeRemaining = Math.max(0, this._timeRemaining - delta / 60);
+        this._timerCounter.text = `${Math.ceil(this._timeRemaining)}`;
+
+        if (this._timeRemaining <= 0) {
+            this.game.gameOver();
+        }
     }
 
     /** Resets the state of the system back to its initial state. */
@@ -289,6 +329,10 @@ export class HudSystem implements System {
         // Position the score counter
         this._scoreCounter.view.x = designConfig.content.width * 0.5 - this._scoreCounter.view.width - 30;
         this._scoreCounter.view.y = -70;
+
+        // Position the timer counter
+        this._timerCounter.x = 0;
+        this._timerCounter.y = -70;
     }
 
     /** Updates the height of the top tray based on the current height of the main container. */

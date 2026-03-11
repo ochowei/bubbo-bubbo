@@ -20,6 +20,8 @@ import { SpaceDecorSystem } from './systems/SpaceDecorSystem';
 
 /** A class that handles all of gameplay based features. */
 export class Game {
+    /** Current game mode selected by the user. */
+    public mode: string = 'endless';
     /** Container to hold all game visuals. */
     public stage = new Container();
     /** Container to hold gameplay elements like bubbles. */
@@ -94,10 +96,17 @@ export class Game {
 
     /** Performs initial setup for the game. */
     public async awake() {
+        this.systems.get(HudSystem).setMode(this.mode);
         // Call `awake()` on the systems
         this.systems.awake();
         // Set the game container to be visible
         this.gameContainer.visible = true;
+    }
+
+    /** Sets the current game mode. */
+    public setMode(mode: string) {
+        this.mode = mode;
+        this.systems.get(HudSystem).setMode(mode);
     }
 
     /** Starts the game logic. */

@@ -5,8 +5,12 @@ import { designConfig } from '../game/designConfig';
 import { Game } from '../game/Game';
 import type { AppScreen } from '../navigation';
 
+interface GameScreenData {
+    mode?: 'endless' | 'time-attack' | 'timeAttack' | 'puzzle';
+}
+
 /** The screen that contains all the gameplay */
-export class GameScreen extends Container implements AppScreen {
+export class GameScreen extends Container implements AppScreen<GameScreenData> {
     /** A unique identifier for the screen */
     public static SCREEN_ID = 'game';
     /** An array of bundle IDs for dynamic asset loading. */
@@ -34,6 +38,13 @@ export class GameScreen extends Container implements AppScreen {
         this._game = new Game();
         this._game.init();
         this.addChild(this._game.stage);
+    }
+
+
+    /** Called before `show`, sets up mode-specific game state. */
+    public prepare(data?: GameScreenData) {
+        const mode = data?.mode === 'timeAttack' ? 'time-attack' : data?.mode ?? 'endless';
+        this._game.setMode(mode);
     }
 
     /** Called when the screen is being shown. */
