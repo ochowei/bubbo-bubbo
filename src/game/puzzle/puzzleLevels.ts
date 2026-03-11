@@ -40,6 +40,7 @@ export const puzzleLevels: PuzzleLevel[] = [
             // row j=2  (even → 13 cells, first 3 used — ceiling anchor)
             ['red', 'green', 'blue', null, null, null, null, null, null, null, null, null, null],
         ],
+        queue: ['red', 'green', 'blue', 'red', 'green', 'blue', 'red', 'green', 'blue'],
         parShots: 3,
         allowedSpecials: false,
     },
@@ -69,6 +70,7 @@ export const puzzleLevels: PuzzleLevel[] = [
             // row j=3  (odd  → 12 cells, first 4 used — ceiling anchor)
             ['red', 'green', 'blue', 'yellow', null, null, null, null, null, null, null, null],
         ],
+        queue: ['red', 'green', 'blue', 'yellow', 'red', 'green', 'blue', 'yellow'],
         parShots: 4,
         allowedSpecials: false,
     },
@@ -101,6 +103,7 @@ export const puzzleLevels: PuzzleLevel[] = [
             // row j=4  (even → 13 cells, first 1 used — ceiling anchor)
             ['red', null, null, null, null, null, null, null, null, null, null, null, null],
         ],
+        queue: ['red', 'green', 'blue', 'green', 'blue', 'red', 'green', 'blue'],
         parShots: 5,
         allowedSpecials: true,
     },
