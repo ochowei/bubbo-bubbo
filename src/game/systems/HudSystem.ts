@@ -64,6 +64,11 @@ export class HudSystem implements System {
     /** Mode title text shown during gameplay */
     private _modeTitleText!: Text;
 
+    /** Shots counter text shown in puzzle mode: "SHOTS: x / PAR: y" */
+    private _puzzleShotsText!: Text;
+    /** Whether the current game is in puzzle mode */
+    private _isPuzzle = false;
+
     /** A flag to determine if the tutorial view has been seen. */
     private _hasShownHelper = false;
     /** Used to store all the point toaster visuals. */
@@ -177,6 +182,20 @@ export class HudSystem implements System {
         this._modeTitleText.anchor.set(0.5);
         this._modeTitleText.visible = false;
 
+        // Create the puzzle shots counter text
+        this._puzzleShotsText = new Text({
+            style: {
+                fontSize: 22,
+                fontWeight: '900',
+                fontFamily: 'Bungee-Regular',
+                fill: 0xffffff,
+                stroke: { color: 0x000000, width: 4 },
+                align: 'left',
+            },
+        });
+        this._puzzleShotsText.anchor.set(0, 0.5);
+        this._puzzleShotsText.visible = false;
+
         // Add hud to containers
         this._decorContainer.addChild(
             this._mask,
@@ -195,6 +214,7 @@ export class HudSystem implements System {
             this._pauseButton,
             this._timerText,
             this._modeTitleText,
+            this._puzzleShotsText,
         );
 
         // Designate the mask to the game hud
@@ -230,8 +250,10 @@ export class HudSystem implements System {
             this._timerText.visible = false;
         }
 
-        // Show mode title for time-attack and endless modes
+        // Show mode title for all modes; puzzle also gets a shots counter
         const mode = this.game.mode;
+
+        this._isPuzzle = mode === 'puzzle';
 
         if (mode === 'time-attack') {
             this._modeTitleText.text = i18n.t('modeTimeAttack');
@@ -239,8 +261,18 @@ export class HudSystem implements System {
         } else if (mode === 'endless') {
             this._modeTitleText.text = i18n.t('modeEndless');
             this._modeTitleText.visible = true;
+        } else if (mode === 'puzzle') {
+            this._modeTitleText.text = i18n.t('modePuzzle');
+            this._modeTitleText.visible = true;
         } else {
             this._modeTitleText.visible = false;
+        }
+
+        if (this._isPuzzle) {
+            this._puzzleShotsText.text = `SHOTS: 0 / PAR: ${this.game.stats.get('parShots')}`;
+            this._puzzleShotsText.visible = true;
+        } else {
+            this._puzzleShotsText.visible = false;
         }
     }
 
@@ -328,6 +360,14 @@ export class HudSystem implements System {
                 this.game.gameOver();
             }
         }
+
+        // Update puzzle shots counter
+        if (this._isPuzzle) {
+            const shots = this.game.stats.get('shotsFired');
+            const par = this.game.stats.get('parShots');
+
+            this._puzzleShotsText.text = `SHOTS: ${shots} / PAR: ${par}`;
+        }
     }
 
     /** Resets the state of the system back to its initial state. */
@@ -340,6 +380,10 @@ export class HudSystem implements System {
         this._timeLeft = 0;
         this._timerText.visible = false;
         this._modeTitleText.visible = false;
+
+        // Reset puzzle mode state
+        this._isPuzzle = false;
+        this._puzzleShotsText.visible = false;
 
         // Destroy all point toasters
         removeAllFromArray(this._toasterList, (toaster: PointToaster) => {
@@ -380,6 +424,10 @@ export class HudSystem implements System {
         // Position the mode title centered at the top of the HUD
         this._modeTitleText.x = 0;
         this._modeTitleText.y = -designConfig.content.height + 45;
+
+        // Position the puzzle shots counter below the mode title
+        this._puzzleShotsText.x = -designConfig.content.width * 0.5 + 20;
+        this._puzzleShotsText.y = -designConfig.content.height + 80;
     }
 
     /** Updates the height of the top tray based on the current height of the main container. */

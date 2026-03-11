@@ -175,6 +175,11 @@ export class CannonSystem implements System {
         // Increment the number of shots fired
         this._shotProjectiles++;
 
+        // Track puzzle shots fired
+        if (this.game.mode === 'puzzle') {
+            this.game.stats.increment('shotsFired');
+        }
+
         // Create a bubble instance from the LevelSystem
         const bubble = this.game.systems.get(LevelSystem).createBubble();
 

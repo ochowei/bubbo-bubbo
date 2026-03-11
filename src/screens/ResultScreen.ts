@@ -23,6 +23,12 @@ export interface ResultsData {
     powerups: number;
     /** The highscore achieved in the game, or the one that is stored in localstorage. */
     highscore: number;
+    /** Puzzle mode: number of shots the player used (undefined = not puzzle mode). */
+    shotsFired?: number;
+    /** Puzzle mode: the par (minimum target shots) for the level. */
+    parShots?: number;
+    /** Puzzle mode: 1-based level number shown to the player. */
+    puzzleLevelId?: number;
 }
 
 /** The `StatView` class represents a visual representation of a game stats. */
@@ -108,6 +114,8 @@ class ResultsPanel {
     private _highscoreText!: Text;
     /** The maximum width for the score text. */
     private _maxScoreWidth = 0;
+    /** Container for the puzzle-specific result section (hidden in non-puzzle modes). */
+    private _puzzleSection = new Container();
 
     constructor() {
         // Initialise the base sprite and creates child objects for the breakdown panel and score and high score displays
@@ -146,6 +154,9 @@ class ResultsPanel {
             title: i18n.t('resultsScoreTitle'),
         });
 
+        // Build the puzzle-only result section (initially hidden)
+        this._buildPuzzleSection();
+
         this.view.addChild(this._base);
     }
 
@@ -178,6 +189,90 @@ class ResultsPanel {
         while (this._highscoreText.width > this._maxScoreWidth) {
             this._highscoreText.style.fontSize--;
         }
+
+        // Show or hide the puzzle section based on whether puzzle data is present
+        const isPuzzle = data.shotsFired !== undefined;
+
+        this._puzzleSection.visible = isPuzzle;
+
+        if (isPuzzle) {
+            this._updatePuzzleSection(data.shotsFired!, data.parShots!, data.puzzleLevelId ?? 1);
+        }
+    }
+
+    /**
+     * Update the puzzle result section with shot and par data.
+     * @param shotsFired - Shots used by the player.
+     * @param parShots - Target minimum shots for the level.
+     * @param levelId - 1-based level number.
+     */
+    private _updatePuzzleSection(shotsFired: number, parShots: number, levelId: number) {
+        // Derive star rating: 3★ ≤ par, 2★ = par+1, 1★ = otherwise
+        let stars = 1;
+
+        if (shotsFired <= parShots) stars = 3;
+        else if (shotsFired === parShots + 1) stars = 2;
+
+        const starStr = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+
+        // Update text children of the puzzle section
+        const [levelText, shotsText, ratingText] = this._puzzleSection.children as Text[];
+
+        levelText.text = `PUZZLE ${levelId}`;
+        shotsText.text = `SHOTS: ${shotsFired}  PAR: ${parShots}`;
+        ratingText.text = starStr;
+    }
+
+    /** Create a floating puzzle result box shown only in puzzle mode. */
+    private _buildPuzzleSection() {
+        const levelText = new Text({
+            text: 'PUZZLE 1',
+            style: {
+                fontSize: 20,
+                fontWeight: '900',
+                fontFamily: 'Bungee-Regular',
+                fill: 0xff5f5f,
+                align: 'center',
+            },
+        });
+
+        levelText.anchor.set(0.5);
+        levelText.y = -40;
+
+        const shotsText = new Text({
+            text: 'SHOTS: 0  PAR: 0',
+            style: {
+                fontSize: 18,
+                fontFamily: 'Opensans-Semibold',
+                fill: 0x000000,
+                align: 'center',
+            },
+        });
+
+        shotsText.anchor.set(0.5);
+        shotsText.y = -10;
+
+        const ratingText = new Text({
+            text: '☆☆☆',
+            style: {
+                fontSize: 36,
+                fontFamily: 'Bungee-Regular',
+                fill: 0xffca42,
+                stroke: { color: 0x000000, width: 3 },
+                align: 'center',
+            },
+        });
+
+        ratingText.anchor.set(0.5);
+        ratingText.y = 30;
+
+        this._puzzleSection.addChild(levelText, shotsText, ratingText);
+
+        // Position the puzzle section below the score panel
+        this._puzzleSection.y = 360;
+        this._puzzleSection.visible = false;
+
+        this._base.addChild(this._puzzleSection);
     }
 
     /** Helper function to create a smaller panel within the main panel. */

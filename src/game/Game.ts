@@ -37,6 +37,8 @@ export class Game {
     public isGameOver = false;
     /** The current game mode */
     public mode: GameMode = 'endless';
+    /** The current puzzle level index (0-based) — only used when mode === 'puzzle' */
+    public puzzleLevelId = 0;
 
     /** The hit area to be used by the `hitContainer`. */
     private readonly _hitArea: Rectangle;
@@ -93,6 +95,11 @@ export class Game {
 
         // Initialise systems
         this.systems.init();
+
+        // Listen for puzzle clear to trigger game-over flow with puzzle results
+        this.systems.get(LevelSystem).signals.onPuzzleClear.connect(() => {
+            if (!this.isGameOver) this.gameOver();
+        });
     }
 
     /** Performs initial setup for the game. */
@@ -130,6 +137,11 @@ export class Game {
                 powerups: this.stats.get('powerupsUsed'),
                 combo: this.stats.get('bestCombo'),
                 highscore: this.stats.get('highscore'),
+                ...(this.mode === 'puzzle' && {
+                    shotsFired: this.stats.get('shotsFired'),
+                    parShots: this.stats.get('parShots'),
+                    puzzleLevelId: this.puzzleLevelId + 1,
+                }),
             });
         });
     }
