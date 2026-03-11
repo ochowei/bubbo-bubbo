@@ -195,6 +195,9 @@ export class LevelSystem implements System {
         if (this.game.mode === 'puzzle') {
             const data = loadPuzzleLevel(1);
 
+            this.game.stats.set('levelId', 1);
+            this.game.stats.set('parShots', data.parShots);
+
             this._createPuzzleLevel(data);
         } else {
             // Populating grid

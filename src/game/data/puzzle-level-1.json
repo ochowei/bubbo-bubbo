@@ -4,5 +4,6 @@
         ["red", "red", "green", "green", "blue", "blue", null, null, null, null, null, null],
         ["red", "green", "blue", null, null, null, null, null, null, null, null, null, null]
     ],
-    "shotSequence": ["red", "green", "blue", "red", "green", "blue"]
+    "shotSequence": ["red", "green", "blue", "red", "green", "blue"],
+    "parShots": 3
 }

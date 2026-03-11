@@ -4,6 +4,7 @@ import level1 from '../data/puzzle-level-1.json';
 export interface PuzzleLevelData {
     lines: (BubbleType | null)[][];
     shotSequence: BubbleType[];
+    parShots: number;
 }
 
 /** Lookup map from level id to raw JSON data. */
@@ -36,6 +37,10 @@ export function loadPuzzleLevel(id: number): PuzzleLevelData {
 
     if (!raw.shotSequence || raw.shotSequence.length === 0) {
         throw new Error(`puzzle-level-${id}.json: shotSequence must be a non-empty array`);
+    }
+
+    if (typeof raw.parShots !== 'number' || raw.parShots < 1) {
+        throw new Error(`puzzle-level-${id}.json: parShots must be a positive number`);
     }
 
     return raw;
