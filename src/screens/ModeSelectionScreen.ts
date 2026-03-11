@@ -1,5 +1,5 @@
 import gsap from 'gsap';
-import { Container, Graphics, Text, Texture, TilingSprite } from 'pixi.js';
+import { Container, Text, Texture, TilingSprite } from 'pixi.js';
 
 import { designConfig } from '../game/designConfig';
 import type { AppScreen } from '../navigation';
@@ -10,6 +10,15 @@ import { GameScreen } from './GameScreen';
 
 /** The game modes available for selection. */
 export type GameMode = 'endless' | 'time-attack' | 'puzzle';
+
+/** Shared text style for mode description labels. */
+const DESC_STYLE = {
+    fontSize: 16,
+    fontFamily: 'Opensans-Semibold',
+    fill: 0x555555,
+    align: 'center' as const,
+    lineHeight: 22,
+} as const;
 
 /** The screen that lets the player choose a game mode before playing. */
 export class ModeSelectionScreen extends Container implements AppScreen {
@@ -22,12 +31,13 @@ export class ModeSelectionScreen extends Container implements AppScreen {
     public static assetBundles = ['title-screen', 'game-screen'];
 
     private readonly _background: TilingSprite;
-    /** Coloured pill behind the title text for legibility */
-    private readonly _titleBadge: Graphics;
     private readonly _title: Text;
     private readonly _endlessBtn: SecondaryButton;
+    private readonly _endlessDesc: Text;
     private readonly _timeAttackBtn: SecondaryButton;
+    private readonly _timeAttackDesc: Text;
     private readonly _puzzleBtn: SecondaryButton;
+    private readonly _puzzleDesc: Text;
 
     /** Container animated in from the top */
     private readonly _topAnimContainer = new Container();
@@ -48,47 +58,51 @@ export class ModeSelectionScreen extends Container implements AppScreen {
         });
         this.addChild(this._background);
 
-        // Rounded pill behind the title so it stands out on any background
-        this._titleBadge = new Graphics();
-        this._topAnimContainer.addChild(this._titleBadge);
-
+        // Title — black text is clearly readable on the light dotted background
         this._title = new Text({
             text: i18n.t('modeSelectTitle'),
             style: {
-                fontSize: 60,
+                fontSize: 58,
                 fontFamily: 'Bungee-Regular',
-                fill: 0xffffff,
+                fill: 0x000000,
                 align: 'center',
             },
         });
         this._title.anchor.set(0.5);
         this._topAnimContainer.addChild(this._title);
 
-        this._endlessBtn = new SecondaryButton({
-            text: i18n.t('modeEndless'),
-            tint: 0x49c8ff,
-        });
+        // Endless
+        this._endlessBtn = new SecondaryButton({ text: i18n.t('modeEndless'), tint: 0x49c8ff });
         this._endlessBtn.onPress.connect(() => {
             navigation.goToScreen(GameScreen, { mode: 'endless' as GameMode });
         });
+        this._endlessDesc = new Text({ text: i18n.t('modeEndlessDesc'), style: DESC_STYLE });
+        this._endlessDesc.anchor.set(0.5, 0);
 
-        this._timeAttackBtn = new SecondaryButton({
-            text: i18n.t('modeTimeAttack'),
-            tint: 0xffca42,
-        });
+        // Time Attack
+        this._timeAttackBtn = new SecondaryButton({ text: i18n.t('modeTimeAttack'), tint: 0xffca42 });
         this._timeAttackBtn.onPress.connect(() => {
             navigation.goToScreen(GameScreen, { mode: 'time-attack' as GameMode });
         });
+        this._timeAttackDesc = new Text({ text: i18n.t('modeTimeAttackDesc'), style: DESC_STYLE });
+        this._timeAttackDesc.anchor.set(0.5, 0);
 
-        this._puzzleBtn = new SecondaryButton({
-            text: i18n.t('modePuzzle'),
-            tint: 0xff5f5f,
-        });
+        // Puzzle
+        this._puzzleBtn = new SecondaryButton({ text: i18n.t('modePuzzle'), tint: 0xff5f5f });
         this._puzzleBtn.onPress.connect(() => {
             navigation.goToScreen(GameScreen, { mode: 'puzzle' as GameMode });
         });
+        this._puzzleDesc = new Text({ text: i18n.t('modePuzzleDesc'), style: DESC_STYLE });
+        this._puzzleDesc.anchor.set(0.5, 0);
 
-        this._bottomAnimContainer.addChild(this._endlessBtn, this._timeAttackBtn, this._puzzleBtn);
+        this._bottomAnimContainer.addChild(
+            this._endlessBtn,
+            this._endlessDesc,
+            this._timeAttackBtn,
+            this._timeAttackDesc,
+            this._puzzleBtn,
+            this._puzzleDesc,
+        );
 
         this.addChild(this._topAnimContainer, this._bottomAnimContainer);
     }
@@ -128,32 +142,30 @@ export class ModeSelectionScreen extends Container implements AppScreen {
         this._background.height = h;
 
         const cx = w * 0.5;
-        const titleY = h * 0.28;
-
-        // Redraw the badge to fit behind the title text
-        const badgeW = 360;
-        const badgeH = 80;
-
-        this._titleBadge
-            .clear()
-            .roundRect(-badgeW / 2, -badgeH / 2, badgeW, badgeH, 16)
-            .fill({ color: 0x000000, alpha: 0.45 });
-        this._titleBadge.x = cx;
-        this._titleBadge.y = titleY;
 
         this._title.x = cx;
-        this._title.y = titleY;
+        this._title.y = h * 0.18;
 
-        const btnSpacing = 90;
-        const baseY = h * 0.56;
+        // Each row = button (height ~52px at scale 0.75) + 8px gap + desc (~44px) + 20px gap
+        const rowHeight = 124;
+        const groupTop = h * 0.38;
 
+        // Endless row
         this._endlessBtn.x = cx;
-        this._endlessBtn.y = baseY;
+        this._endlessBtn.y = groupTop;
+        this._endlessDesc.x = cx;
+        this._endlessDesc.y = groupTop + 46;
 
+        // Time Attack row
         this._timeAttackBtn.x = cx;
-        this._timeAttackBtn.y = baseY + btnSpacing;
+        this._timeAttackBtn.y = groupTop + rowHeight;
+        this._timeAttackDesc.x = cx;
+        this._timeAttackDesc.y = groupTop + rowHeight + 46;
 
+        // Puzzle row
         this._puzzleBtn.x = cx;
-        this._puzzleBtn.y = baseY + btnSpacing * 2;
+        this._puzzleBtn.y = groupTop + rowHeight * 2;
+        this._puzzleDesc.x = cx;
+        this._puzzleDesc.y = groupTop + rowHeight * 2 + 46;
     }
 }

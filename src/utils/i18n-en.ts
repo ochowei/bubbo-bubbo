@@ -23,6 +23,9 @@ export const i18nDict = {
     resultsHighscoreTitle: 'HIGHSCORE',
     modeSelectTitle: 'SELECT MODE',
     modeEndless: 'ENDLESS',
+    modeEndlessDesc: 'Pop bubbles until you miss!\nNo time limit — just pure score.',
     modeTimeAttack: 'TIME ATTACK',
+    modeTimeAttackDesc: 'Race against the clock!\nPop as many as you can in time.',
     modePuzzle: 'PUZZLE',
+    modePuzzleDesc: 'Clear every bubble from the board.\nThink before you shoot!',
 };
