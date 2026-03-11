@@ -7,6 +7,7 @@ import { navigation } from '../navigation';
 import { SecondaryButton } from '../ui/buttons/SecondaryButton';
 import { i18n } from '../utils/i18n';
 import { GameScreen } from './GameScreen';
+import { TitleScreen } from './TitleScreen';
 
 /** The game modes available for selection. */
 export type GameMode = 'endless' | 'time-attack' | 'puzzle';
@@ -16,8 +17,10 @@ const DESC_STYLE = {
     fontSize: 16,
     fontFamily: 'Opensans-Semibold',
     fill: 0x555555,
-    align: 'center' as const,
+    align: 'left' as const,
     lineHeight: 22,
+    wordWrap: true,
+    wordWrapWidth: 250,
 } as const;
 
 /** The screen that lets the player choose a game mode before playing. */
@@ -38,6 +41,7 @@ export class ModeSelectionScreen extends Container implements AppScreen {
     private readonly _timeAttackDesc: Text;
     private readonly _puzzleBtn: SecondaryButton;
     private readonly _puzzleDesc: Text;
+    private readonly _backBtn: SecondaryButton;
 
     /** Container animated in from the top */
     private readonly _topAnimContainer = new Container();
@@ -77,15 +81,23 @@ export class ModeSelectionScreen extends Container implements AppScreen {
             navigation.goToScreen(GameScreen, { mode: 'endless' as GameMode });
         });
         this._endlessDesc = new Text({ text: i18n.t('modeEndlessDesc'), style: DESC_STYLE });
-        this._endlessDesc.anchor.set(0.5, 0);
+        this._endlessDesc.anchor.set(0, 0.5);
+        this._endlessDesc.visible = false;
+        this.bindHoverDescription(this._endlessBtn, this._endlessDesc);
 
         // Time Attack
-        this._timeAttackBtn = new SecondaryButton({ text: i18n.t('modeTimeAttack'), tint: 0xffca42 });
+        this._timeAttackBtn = new SecondaryButton({
+            text: i18n.t('modeTimeAttack'),
+            tint: 0xffca42,
+            textStyle: { fontSize: 33 },
+        });
         this._timeAttackBtn.onPress.connect(() => {
             navigation.goToScreen(GameScreen, { mode: 'time-attack' as GameMode });
         });
         this._timeAttackDesc = new Text({ text: i18n.t('modeTimeAttackDesc'), style: DESC_STYLE });
-        this._timeAttackDesc.anchor.set(0.5, 0);
+        this._timeAttackDesc.anchor.set(0, 0.5);
+        this._timeAttackDesc.visible = false;
+        this.bindHoverDescription(this._timeAttackBtn, this._timeAttackDesc);
 
         // Puzzle
         this._puzzleBtn = new SecondaryButton({ text: i18n.t('modePuzzle'), tint: 0xff5f5f });
@@ -93,7 +105,18 @@ export class ModeSelectionScreen extends Container implements AppScreen {
             navigation.goToScreen(GameScreen, { mode: 'puzzle' as GameMode });
         });
         this._puzzleDesc = new Text({ text: i18n.t('modePuzzleDesc'), style: DESC_STYLE });
-        this._puzzleDesc.anchor.set(0.5, 0);
+        this._puzzleDesc.anchor.set(0, 0.5);
+        this._puzzleDesc.visible = false;
+        this.bindHoverDescription(this._puzzleBtn, this._puzzleDesc);
+
+        this._backBtn = new SecondaryButton({
+            text: i18n.t('modeBack'),
+            tint: 0xbcbcbc,
+            textStyle: { fontSize: 26 },
+        });
+        this._backBtn.onPress.connect(() => {
+            navigation.goToScreen(TitleScreen);
+        });
 
         this._bottomAnimContainer.addChild(
             this._endlessBtn,
@@ -102,9 +125,24 @@ export class ModeSelectionScreen extends Container implements AppScreen {
             this._timeAttackDesc,
             this._puzzleBtn,
             this._puzzleDesc,
+            this._backBtn,
         );
 
         this.addChild(this._topAnimContainer, this._bottomAnimContainer);
+    }
+
+    /** Displays mode descriptions only while the mouse hovers a mode button. */
+    private bindHoverDescription(button: SecondaryButton, description: Text) {
+        button.on('pointerover', () => {
+            this._endlessDesc.visible = false;
+            this._timeAttackDesc.visible = false;
+            this._puzzleDesc.visible = false;
+            description.visible = true;
+        });
+
+        button.on('pointerout', () => {
+            description.visible = false;
+        });
     }
 
     /** Called before `show`, resets animation containers to off-screen positions. */
@@ -146,26 +184,30 @@ export class ModeSelectionScreen extends Container implements AppScreen {
         this._title.x = cx;
         this._title.y = h * 0.18;
 
-        // Each row = button (height ~52px at scale 0.75) + 8px gap + desc (~44px) + 20px gap
+        // Vertical spacing between mode rows.
         const rowHeight = 124;
         const groupTop = h * 0.38;
+        const descOffsetX = 180;
 
         // Endless row
         this._endlessBtn.x = cx;
         this._endlessBtn.y = groupTop;
-        this._endlessDesc.x = cx;
-        this._endlessDesc.y = groupTop + 46;
+        this._endlessDesc.x = cx + descOffsetX;
+        this._endlessDesc.y = groupTop;
 
         // Time Attack row
         this._timeAttackBtn.x = cx;
         this._timeAttackBtn.y = groupTop + rowHeight;
-        this._timeAttackDesc.x = cx;
-        this._timeAttackDesc.y = groupTop + rowHeight + 46;
+        this._timeAttackDesc.x = cx + descOffsetX;
+        this._timeAttackDesc.y = groupTop + rowHeight;
 
         // Puzzle row
         this._puzzleBtn.x = cx;
         this._puzzleBtn.y = groupTop + rowHeight * 2;
-        this._puzzleDesc.x = cx;
-        this._puzzleDesc.y = groupTop + rowHeight * 2 + 46;
+        this._puzzleDesc.x = cx + descOffsetX;
+        this._puzzleDesc.y = groupTop + rowHeight * 2;
+
+        this._backBtn.x = 110;
+        this._backBtn.y = h - 45;
     }
 }
