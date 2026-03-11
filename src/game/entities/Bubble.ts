@@ -26,7 +26,7 @@ export class SpoofBubble {
      * Calculated based on `i` and `boardConfig.bubbleSize`.
      */
     public get defaultX() {
-        return (this.i + 1) * (boardConfig.bubbleSize / 2);
+        return (this.i + 1 - boardConfig.bubbleOverflow * 2) * (boardConfig.bubbleSize / 2);
     }
 
     /**
