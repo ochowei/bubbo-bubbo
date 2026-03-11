@@ -1,5 +1,5 @@
 import gsap from 'gsap';
-import { Container, Graphics, NineSliceSprite, Sprite, Texture } from 'pixi.js';
+import { Container, Graphics, NineSliceSprite, Sprite, Text, Texture } from 'pixi.js';
 
 import { IconButton } from '../../ui/buttons/IconButton';
 import { HelperPanel } from '../../ui/HelperPanel';
@@ -8,14 +8,18 @@ import { PointToaster } from '../../ui/PointToaster';
 import { ScoreCounter } from '../../ui/ScoreCounter';
 import { Title } from '../../ui/Title';
 import { removeAllFromArray, removeFromArray } from '../../utils/utils';
+import { i18n } from '../../utils/i18n';
 import { boardConfig } from '../boardConfig';
 import { designConfig } from '../designConfig';
 import type { Bubble } from '../entities/Bubble';
 import type { Game } from '../Game';
+import { PUZZLE_LEVELS } from '../GameMode';
 import { pool } from '../Pool';
 import type { System } from '../SystemRunner';
 import { CannonSystem } from './CannonSystem';
+import { LevelSystem } from './LevelSystem';
 import { PauseSystem } from './PauseSystem';
+import { TimerSystem } from './TimerSystem';
 
 export class HudSystem implements System {
     /**
@@ -64,6 +68,13 @@ export class HudSystem implements System {
      * Used to animate the top hud visual down
      */
     private _topTrayOffsetRatio = 0;
+
+    /** Countdown timer label shown in Time Attack mode. */
+    private _timerLabel!: Text;
+    /** Shots counter label shown in Puzzle mode. */
+    private _shotsLabel!: Text;
+    /** Par label shown in Puzzle mode. */
+    private _parLabel!: Text;
 
     /** Called when the system is added to the game. */
     public init() {
@@ -166,6 +177,46 @@ export class HudSystem implements System {
                 this.game.systems.get(PauseSystem).addTween(this._helperPanel.hide());
             }
         });
+
+        const labelStyle = {
+            fontSize: 22,
+            fontWeight: '900' as const,
+            fontFamily: 'Bungee-Regular',
+            fill: 0xffffff,
+            align: 'center' as const,
+            dropShadow: true,
+            dropShadowDistance: 2,
+            dropShadowColor: 0x000033,
+        };
+
+        // Timer label (Time Attack mode)
+        this._timerLabel = new Text({ text: '', style: labelStyle });
+        this._timerLabel.anchor.set(0.5);
+        this._timerLabel.visible = false;
+        this._gameHudContainer.addChild(this._timerLabel);
+
+        // Shots and par labels (Puzzle mode)
+        this._shotsLabel = new Text({ text: '', style: { ...labelStyle, fontSize: 18 } });
+        this._shotsLabel.anchor.set(0.5);
+        this._shotsLabel.visible = false;
+        this._gameHudContainer.addChild(this._shotsLabel);
+
+        this._parLabel = new Text({ text: '', style: { ...labelStyle, fontSize: 18 } });
+        this._parLabel.anchor.set(0.5);
+        this._parLabel.visible = false;
+        this._gameHudContainer.addChild(this._parLabel);
+
+        // Connect to timer ticks (Time Attack)
+        this.game.systems.get(TimerSystem).signals.onTick.connect((remaining) => {
+            this._updateTimerLabel(remaining);
+        });
+
+        // Connect to cannon fire to refresh shots counter (Puzzle)
+        this.game.systems.get(CannonSystem).signals.onCannonFire.connect(() => {
+            if (this.game.mode === 'puzzle') {
+                this._updateShotsLabel();
+            }
+        });
     }
 
     /** Called prior to the `start` function at the beginning of the game. */
@@ -178,6 +229,25 @@ export class HudSystem implements System {
         this._updateTopTrayHeight();
         // Show the game hud
         this._gameHudContainer.visible = true;
+
+        // Show/hide mode-specific labels
+        const isTimeAttack = this.game.mode === 'timeAttack';
+        const isPuzzle = this.game.mode === 'puzzle';
+
+        this._timerLabel.visible = isTimeAttack;
+        this._shotsLabel.visible = isPuzzle;
+        this._parLabel.visible = isPuzzle;
+
+        if (isTimeAttack) {
+            this._updateTimerLabel(60);
+        }
+
+        if (isPuzzle) {
+            this._updateShotsLabel();
+            const level = PUZZLE_LEVELS[this.game.systems.get(LevelSystem)['_puzzleIndex'] % PUZZLE_LEVELS.length];
+
+            this._parLabel.text = `${i18n.t('hudPar')} ${level.par}`;
+        }
     }
 
     /** Called at the start of the game. */
@@ -253,6 +323,21 @@ export class HudSystem implements System {
         this._laserLine.update(delta);
     }
 
+    /** Update the countdown timer display. */
+    private _updateTimerLabel(remaining: number) {
+        this._timerLabel.text = `${i18n.t('hudTimeLeft')} ${remaining}`;
+
+        // Flash red when under 10 seconds
+        this._timerLabel.style.fill = remaining <= 10 ? 0xff4444 : 0xffffff;
+    }
+
+    /** Update the shots-fired counter display. */
+    private _updateShotsLabel() {
+        const shots = this.game.stats.get('shotsFired');
+
+        this._shotsLabel.text = `${i18n.t('hudShots')} ${shots}`;
+    }
+
     /** Resets the state of the system back to its initial state. */
     public reset() {
         // Reset the score back to zero
@@ -289,6 +374,16 @@ export class HudSystem implements System {
         // Position the score counter
         this._scoreCounter.view.x = designConfig.content.width * 0.5 - this._scoreCounter.view.width - 30;
         this._scoreCounter.view.y = -70;
+
+        // Position mode-specific labels in the top-left of the HUD area
+        this._timerLabel.x = -designConfig.content.width * 0.5 + 70;
+        this._timerLabel.y = -70;
+
+        this._shotsLabel.x = -designConfig.content.width * 0.5 + 60;
+        this._shotsLabel.y = -80;
+
+        this._parLabel.x = -designConfig.content.width * 0.5 + 60;
+        this._parLabel.y = -55;
     }
 
     /** Updates the height of the top tray based on the current height of the main container. */

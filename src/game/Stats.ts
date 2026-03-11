@@ -15,6 +15,8 @@ const DEFAULT_STATS = {
     bestCombo: 0,
     /** How many powerups have been triggered */
     powerupsUsed: 0,
+    /** How many shots have been fired (used by Puzzle mode) */
+    shotsFired: 0,
 };
 
 /** Type defined from the default data. */

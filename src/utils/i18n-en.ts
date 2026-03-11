@@ -21,4 +21,23 @@ export const i18nDict = {
     resultsBreakdownCombo: 'Best combo',
     resultsScoreTitle: 'FINAL SCORE',
     resultsHighscoreTitle: 'HIGHSCORE',
+    // Mode select screen
+    modeSelectTitle: 'SELECT MODE',
+    modeEndlessName: 'ENDLESS',
+    modeEndlessDesc: 'Survive as long\nas you can!',
+    modeTimeAttackName: 'TIME ATTACK',
+    modeTimeAttackDesc: 'Pop the most\nbubbles in 60s!',
+    modePuzzleName: 'PUZZLE',
+    modePuzzleDesc: 'Clear the board\nin fewest shots!',
+    // In-game HUD additions
+    hudTimeLeft: 'TIME',
+    hudShots: 'SHOTS',
+    hudPar: 'PAR',
+    // Results screen additions
+    resultsTimeAttackTitle: "TIME'S UP!",
+    resultsPuzzleTitle: 'PUZZLE CLEAR!',
+    resultsPuzzleFailed: 'NOT CLEARED',
+    resultsBreakdownShots: 'Shots fired',
+    resultsBreakdownPar: 'Par',
+    resultsPuzzleScore: 'PUZZLE SCORE',
 };

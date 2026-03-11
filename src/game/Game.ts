@@ -5,6 +5,7 @@ import { Container, Rectangle } from 'pixi.js';
 import { navigation } from '../navigation';
 import { ResultScreen } from '../screens/ResultScreen';
 import { boardConfig } from './boardConfig';
+import type { GameMode } from './GameMode';
 import { Stats } from './Stats';
 import { SystemRunner } from './SystemRunner';
 import { AimSystem } from './systems/AimSystem';
@@ -17,6 +18,7 @@ import { PhysicsSystem } from './systems/PhysicsSystem';
 import { PowerSystem } from './systems/PowerSystem';
 import { ScoreSystem } from './systems/ScoreSystem';
 import { SpaceDecorSystem } from './systems/SpaceDecorSystem';
+import { TimerSystem } from './systems/TimerSystem';
 
 /** A class that handles all of gameplay based features. */
 export class Game {
@@ -34,6 +36,8 @@ export class Game {
     public stats: Stats;
     /** A flag to determine if the game has reached the "GAMEOVER" state */
     public isGameOver = false;
+    /** The current game mode. */
+    public mode: GameMode = 'endless';
 
     /** The hit area to be used by the `hitContainer`. */
     private readonly _hitArea: Rectangle;
@@ -87,6 +91,7 @@ export class Game {
         this.systems.add(CannonSystem);
         this.systems.add(EffectsSystem);
         this.systems.add(ScoreSystem);
+        this.systems.add(TimerSystem);
 
         // Initialise systems
         this.systems.init();
@@ -104,6 +109,17 @@ export class Game {
     public async start() {
         // Call `start()` on the systems.
         this.systems.start();
+
+        // Wire up mode-specific game-over triggers
+        if (this.mode === 'timeAttack') {
+            this.systems.get(TimerSystem).signals.onTimerEnd.connect(() => {
+                if (!this.isGameOver) this.gameOver();
+            });
+        } else if (this.mode === 'puzzle') {
+            this.systems.get(LevelSystem).signals.onPuzzleClear.connect(() => {
+                if (!this.isGameOver) this.gameOver();
+            });
+        }
     }
 
     /** Handles the end of the game. */
@@ -122,11 +138,13 @@ export class Game {
             // Navigate to the ResultScreen after a 1 second delay
             // Send all relevant user stats
             navigation.goToScreen(ResultScreen, {
+                mode: this.mode,
                 score: this.stats.get('score'),
                 popped: this.stats.get('bubblesPopped'),
                 powerups: this.stats.get('powerupsUsed'),
                 combo: this.stats.get('bestCombo'),
                 highscore: this.stats.get('highscore'),
+                shotsFired: this.stats.get('shotsFired'),
             });
         });
     }

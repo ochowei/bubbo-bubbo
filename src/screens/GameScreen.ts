@@ -3,7 +3,13 @@ import { Container, Texture, Ticker, TilingSprite } from 'pixi.js';
 
 import { designConfig } from '../game/designConfig';
 import { Game } from '../game/Game';
+import type { GameMode } from '../game/GameMode';
 import type { AppScreen } from '../navigation';
+
+/** Data passed to the GameScreen when navigating to it. */
+export interface GameScreenData {
+    mode?: GameMode;
+}
 
 /** The screen that contains all the gameplay */
 export class GameScreen extends Container implements AppScreen {
@@ -34,6 +40,14 @@ export class GameScreen extends Container implements AppScreen {
         this._game = new Game();
         this._game.init();
         this.addChild(this._game.stage);
+    }
+
+    /**
+     * Called before `show`, receives the game mode selection.
+     * @param data - Contains the chosen game mode.
+     */
+    public prepare(data?: GameScreenData) {
+        this._game.mode = data?.mode ?? 'endless';
     }
 
     /** Called when the screen is being shown. */

@@ -11,6 +11,7 @@ import { Bubble, SpoofBubble } from '../entities/Bubble';
 import { BubbleLine, MAX_BUBBLE_INDEX } from '../entities/BubbleLine';
 import type { PhysicsBody } from '../entities/PhysicsBody';
 import type { Game } from '../Game';
+import { PUZZLE_LEVELS, PuzzleLevel } from '../GameMode';
 import { pool } from '../Pool';
 import type { System } from '../SystemRunner';
 import { AimSystem } from './AimSystem';
@@ -40,7 +41,12 @@ export class LevelSystem implements System {
     public signals = {
         /** Emitted when the initial bubble animation has been completed. */
         onGameReady: new Signal<() => void>(),
+        /** Emitted when all bubbles are cleared in Puzzle mode. */
+        onPuzzleClear: new Signal<() => void>(),
     };
+
+    /** Which puzzle level is currently active (cycles through PUZZLE_LEVELS). */
+    private _puzzleIndex = 0;
 
     // Coefficient determining the likelihood of generating a bubble of a different type than its directly neighouring bubbles.
     // Low heterogeneity implies an homogenous board will be generated.
@@ -101,8 +107,15 @@ export class LevelSystem implements System {
 
     /** Called at the start of the game. */
     public start() {
-        // Create the entire initial grid
-        this.createLevel();
+        // Create the initial grid (mode-specific)
+        if (this.game.mode === 'puzzle') {
+            const level = PUZZLE_LEVELS[this._puzzleIndex % PUZZLE_LEVELS.length];
+
+            this._createPuzzleLevel(level);
+        } else {
+            this.createLevel();
+        }
+
         // Update the aim system's roof
         this.game.systems.get(AimSystem).updateRoof();
         // Show the grid container
@@ -201,6 +214,50 @@ export class LevelSystem implements System {
         this._gridContainer.y = -count * boardConfig.bubbleSize;
 
         // Loop through the new lines and reset their position ratio
+        this.lines.forEach((line) => {
+            line.updatePosRatio(1);
+        });
+    }
+
+    /**
+     * Build a static grid from a PuzzleLevel definition.
+     * Does NOT start the new-line timer.
+     * @param level - The puzzle level to load.
+     */
+    private _createPuzzleLevel(level: PuzzleLevel) {
+        // Reset countPerType so the cannon only offers colours present in the puzzle
+        this.countPerType.clear();
+
+        boardConfig.bubbleTypes.forEach((type) => {
+            this.countPerType.set(type as BubbleType, 0);
+        });
+
+        // Create the required BubbleLines (j=0 is even, j=1 is odd, …)
+        for (let j = 0; j < level.rows; j++) {
+            const isEven = j % 2 === 0;
+            const line = pool.get(BubbleLine);
+
+            line.init(j, this.game, isEven);
+            line.y = boardConfig.screenTop + boardConfig.bubbleSize * j;
+            this.lines.push(line);
+        }
+
+        // Place each bubble from the level definition
+        level.bubbles.forEach(({ i, j, type }) => {
+            const line = this.lines[j];
+
+            if (!line) return;
+
+            const bubble = this._createGridBubble(type, i, j);
+
+            line.addBubble(bubble, this.calculateBubbleX(bubble));
+            this._gridContainer.addChild(bubble.view);
+        });
+
+        // Hide and offset the grid (same treatment as createLevel)
+        this._gridContainer.alpha = 0;
+        this._gridContainer.y = -level.rows * boardConfig.bubbleSize;
+
         this.lines.forEach((line) => {
             line.updatePosRatio(1);
         });
@@ -552,13 +609,19 @@ export class LevelSystem implements System {
             if (isCluster || hasSpecial) {
                 this.game.systems.get(EffectsSystem).shockwave(x, y, hasSpecial);
             }
+
+            // In Puzzle mode, check whether the grid has been fully cleared
+            if (this.game.mode === 'puzzle' && this.lines.length === 0) {
+                this.signals.onPuzzleClear.emit();
+            }
         });
 
         // Add the shimmer tween to the pause system
         pause.addTween(tween);
 
-        // Start adding new lines once the first bubble has connected
-        if (!this._allowNewLine) {
+        // Start adding new lines once the first bubble has connected.
+        // Puzzle mode never spawns new lines.
+        if (!this._allowNewLine && this.game.mode !== 'puzzle') {
             this._allowNewLine = true;
             this.addLineToGridTop();
         }

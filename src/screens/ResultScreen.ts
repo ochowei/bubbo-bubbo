@@ -3,16 +3,21 @@ import { Container, Graphics, Sprite, Text, Texture, TilingSprite } from 'pixi.j
 
 import { boardConfig, randomType } from '../game/boardConfig';
 import { designConfig } from '../game/designConfig';
+import type { GameMode } from '../game/GameMode';
+import { PUZZLE_LEVELS } from '../game/GameMode';
 import { AppScreen, navigation } from '../navigation';
 import { IconButton } from '../ui/buttons/IconButton';
 import { PrimaryButton } from '../ui/buttons/PrimaryButton';
 import { Porthole } from '../ui/Porthole';
 import { i18n } from '../utils/i18n';
 import { GameScreen } from './GameScreen';
+import { ModeSelectScreen } from './ModeSelectScreen';
 import { TitleScreen } from './TitleScreen';
 
 /** The `ResultsData` interface represents the data of the results screen. */
 export interface ResultsData {
+    /** The game mode that just ended. */
+    mode: GameMode;
     /** The score of the player. */
     score: number;
     /** The number of bubbles popped. */
@@ -23,6 +28,8 @@ export interface ResultsData {
     powerups: number;
     /** The highscore achieved in the game, or the one that is stored in localstorage. */
     highscore: number;
+    /** How many shots were fired (Puzzle mode). */
+    shotsFired: number;
 }
 
 /** The `StatView` class represents a visual representation of a game stats. */
@@ -102,10 +109,16 @@ class ResultsPanel {
     private _powerupsUsedStat!: StatView;
     /** The stat view for the best combo score. */
     private _comboStat!: StatView;
+    /** The stat view for shots fired (Puzzle mode). */
+    private _shotsFiredStat!: StatView;
+    /** The stat view for par (Puzzle mode). */
+    private _parStat!: StatView;
     /** The text display for the player's score. */
     private _scoreText!: Text;
     /** The text display for the player's high score. */
     private _highscoreText!: Text;
+    /** The title text of the panel. */
+    private _titleText!: Text;
     /** The maximum width for the score text. */
     private _maxScoreWidth = 0;
 
@@ -114,7 +127,7 @@ class ResultsPanel {
         this._base = Sprite.from('panel-end-screen-base');
         this._base.anchor.set(0.5);
 
-        const titleText = new Text({
+        this._titleText = new Text({
             text: i18n.t('resultsTitle'),
             style: {
                 fontSize: 30,
@@ -125,10 +138,10 @@ class ResultsPanel {
             },
         });
 
-        titleText.anchor.set(0.5);
-        titleText.y = -(this._base.height * 0.5) + 27;
+        this._titleText.anchor.set(0.5);
+        this._titleText.y = -(this._base.height * 0.5) + 27;
 
-        this._base.addChild(titleText);
+        this._base.addChild(this._titleText);
 
         // Create the extra stats section of the results screen
         this._buildBreakdownPanel();
@@ -154,13 +167,41 @@ class ResultsPanel {
      * @param data - The ResultsData object to display.
      */
     public updateData(data: ResultsData) {
+        // Update panel title based on mode
+        if (data.mode === 'timeAttack') {
+            this._titleText.text = i18n.t('resultsTimeAttackTitle');
+        } else if (data.mode === 'puzzle') {
+            this._titleText.text =
+                data.popped > 0 ? i18n.t('resultsPuzzleTitle') : i18n.t('resultsPuzzleFailed');
+        } else {
+            this._titleText.text = i18n.t('resultsTitle');
+        }
+
+        // Show/hide puzzle-specific stats
+        const isPuzzle = data.mode === 'puzzle';
+
+        this._shotsFiredStat.view.visible = isPuzzle;
+        this._parStat.view.visible = isPuzzle;
+        this._powerupsUsedStat.view.visible = !isPuzzle;
+
         // Update the substats panel data
         this._bubblesPoppedStat.updateValue(data.popped);
         this._comboStat.updateValue(data.combo);
         this._powerupsUsedStat.updateValue(data.powerups);
+        this._shotsFiredStat.updateValue(data.shotsFired);
+
+        // Use par from first puzzle level as a fallback
+        const currentPar = PUZZLE_LEVELS[0].par;
+
+        this._parStat.updateValue(currentPar);
+
+        // For Puzzle mode, derive a score from how close to par the player was
+        const displayScore = isPuzzle
+            ? Math.max(0, (currentPar - data.shotsFired) * 100 + data.popped * 10)
+            : data.score;
 
         // Update the player score
-        this._scoreText.text = data.score;
+        this._scoreText.text = displayScore;
 
         // Reset the score text font size
         this._scoreText.style.fontSize = 60;
@@ -171,7 +212,7 @@ class ResultsPanel {
         }
 
         // Do the same for the highscore
-        this._highscoreText.text = data.highscore;
+        this._highscoreText.text = isPuzzle ? data.shotsFired : data.highscore;
 
         this._highscoreText.style.fontSize = 60;
 
@@ -221,11 +262,22 @@ class ResultsPanel {
         this._powerupsUsedStat = new StatView(i18n.t('resultsBreakdownPowerups'), breakdownPanel.width * 0.9);
         this._powerupsUsedStat.view.y = verticalOffset + verticalGap;
 
+        // Puzzle-specific stats
+        this._shotsFiredStat = new StatView(i18n.t('resultsBreakdownShots'), breakdownPanel.width * 0.9);
+        this._shotsFiredStat.view.y = verticalOffset + verticalGap;
+        this._shotsFiredStat.view.visible = false;
+
+        this._parStat = new StatView(i18n.t('resultsBreakdownPar'), breakdownPanel.width * 0.9);
+        this._parStat.view.y = verticalOffset + verticalGap * 2;
+        this._parStat.view.visible = false;
+
         informationContainer.addChild(
             breakdownTitleText,
             this._bubblesPoppedStat.view,
             this._powerupsUsedStat.view,
             this._comboStat.view,
+            this._shotsFiredStat.view,
+            this._parStat.view,
         );
 
         this._base.addChild(breakdownPanel, informationContainer);
@@ -310,6 +362,10 @@ export class ResultScreen extends Container implements AppScreen {
     private _footer!: Graphics;
     private _playBtn!: PrimaryButton;
     private _backBtn!: IconButton;
+    private _modeSelectBtn!: PrimaryButton;
+
+    /** The last mode used — needed to wire the "Play Again" button correctly. */
+    private _lastMode: GameMode = 'endless';
 
     constructor() {
         super();
@@ -337,6 +393,7 @@ export class ResultScreen extends Container implements AppScreen {
      * @param data - An object containing data specific to this screen.
      */
     public prepare(data: ResultsData) {
+        this._lastMode = data.mode;
         // Update the details data
         this._resultsPanel.updateData(data);
     }
@@ -390,6 +447,9 @@ export class ResultScreen extends Container implements AppScreen {
         this._playBtn.x = w * 0.5;
         this._playBtn.y = h - this._playBtn.height + 5;
 
+        this._modeSelectBtn.x = w * 0.5;
+        this._modeSelectBtn.y = this._playBtn.y - this._modeSelectBtn.height - 5;
+
         this._backBtn.x = 50;
         this._backBtn.y = h - 50;
 
@@ -415,8 +475,17 @@ export class ResultScreen extends Container implements AppScreen {
         });
 
         this._playBtn.onPress.connect(() => {
-            // Go to game screen when user presses play button
-            navigation.goToScreen(GameScreen);
+            // Play again in the same mode
+            navigation.goToScreen(GameScreen, { mode: this._lastMode });
+        });
+
+        this._modeSelectBtn = new PrimaryButton({
+            text: i18n.t('modeSelectTitle'),
+            textStyle: { fontSize: 28 },
+        });
+
+        this._modeSelectBtn.onPress.connect(() => {
+            navigation.goToScreen(ModeSelectScreen);
         });
 
         this._backBtn = new IconButton('icon-back', 1);
@@ -425,6 +494,6 @@ export class ResultScreen extends Container implements AppScreen {
             navigation.goToScreen(TitleScreen);
         });
 
-        this.addChild(this._playBtn, this._backBtn);
+        this.addChild(this._playBtn, this._modeSelectBtn, this._backBtn);
     }
 }
