@@ -9,11 +9,11 @@
 | 里程碑 | 內容 | 預估天數 | 狀態 |
 |--------|------|----------|------|
 | M1 | 規格定義與資料模型 | 1 天 | ✅ 完成 |
-| M2 | LevelSystem puzzle 化 | 2 天 | ⬅️ 下一步 |
-| M3 | 發射次數與 Par 判定 | 1~2 天 | 待辦 |
-| M4 | 通關／失敗條件 | 1~2 天 | 待辦 |
-| M5 | UI/UX | 1~2 天 | 待辦 |
-| M6 | 測試與關卡內容生產 | 2 天+ | 待辦 |
+| M2 | LevelSystem puzzle 化 | 2 天 | ✅ 完成 |
+| M3 | 發射次數與 Par 判定 | 1~2 天 | ✅ 完成 |
+| M4 | 通關／失敗條件 | 1~2 天 | ✅ 完成 |
+| M5 | UI/UX | 1~2 天 | ✅ 完成（部分）|
+| M6 | 測試與關卡內容生產 | 2 天+ | ⬅️ 下一步 |
 
 ---
 
@@ -52,7 +52,7 @@ interface PuzzleLevel {
 
 ---
 
-## M2 — LevelSystem Puzzle 化（2 天）⬅️ 下一步
+## M2 — LevelSystem Puzzle 化（2 天）✅ 完成
 
 **目標**：Puzzle 模式走固定版圖，關閉動態新增行。
 
@@ -77,9 +77,9 @@ interface PuzzleLevel {
 
 ### 驗收標準
 
-- [ ] 同一關卡 ID 每次進入都呈現相同版圖與開局泡泡
-- [ ] 非 puzzle 模式行為不受影響
-- [ ] 若 `allowedSpecials: false`，格子內確實無 special bubble
+- [x] 同一關卡 ID 每次進入都呈現相同版圖與開局泡泡
+- [x] 非 puzzle 模式行為不受影響
+- [x] 若 `allowedSpecials: false`，格子內確實無 special bubble
 
 ---
 
@@ -117,9 +117,9 @@ const isParOrBetter = usedShots <= game.stats.parShots;
 
 ### 驗收標準
 
-- [ ] `shotsFired` 在每次合法發射後正確遞增
-- [ ] `isParOrBetter` 邏輯正確（含邊界值）
-- [ ] 重玩同一關時 `shotsFired` 正確重置
+- [x] `shotsFired` 在每次合法發射後正確遞增
+- [x] `isParOrBetter` 邏輯正確（含邊界值）
+- [x] 重玩同一關時 `shotsFired` 正確重置
 
 ---
 
@@ -157,9 +157,9 @@ const isParOrBetter = usedShots <= game.stats.parShots;
 
 ### 驗收標準
 
-- [ ] 清場時正確觸發通關並進入結果頁
-- [ ] 未清場時不誤觸發通關
-- [ ] Option A/B 選定後，行為符合設計文件
+- [x] 清場時正確觸發通關並進入結果頁
+- [x] 未清場時不誤觸發通關
+- [x] 採用 Option A（無失敗）：只要清場即通關，純比最少步
 
 ---
 
@@ -188,14 +188,14 @@ Rating: ⭐⭐⭐  /  ⭐⭐  /  ⭐
 
 ### 驗收標準
 
-- [ ] HUD 在 puzzle 模式正確顯示步數與 par 值
-- [ ] HUD 在 puzzle 模式不顯示倒數計時
-- [ ] 結果頁正確顯示 puzzle 評分區塊（非 puzzle 模式不顯示）
-- [ ] ModeSelection 有清楚的 puzzle 模式說明
+- [x] HUD 在 puzzle 模式正確顯示步數與 par 值（`SHOTS: x / PAR: y`）
+- [x] HUD 在 puzzle 模式不顯示倒數計時
+- [x] 結果頁正確顯示 puzzle 評分區塊（非 puzzle 模式不顯示）
+- [x] ModeSelection 有清楚的 puzzle 模式說明（已有 `modePuzzleDesc` i18n key）
 
 ---
 
-## M6 — 測試與關卡內容生產（2 天+）
+## M6 — 測試與關卡內容生產（2 天+）⬅️ 下一步
 
 **目標**：確保品質，並建立可持續擴充的關卡內容。
 
