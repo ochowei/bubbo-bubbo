@@ -286,7 +286,8 @@ export class CannonSystem implements System {
      */
     private _newBubble() {
         if (this.game.mode === 'puzzle') {
-            const levelId = this.game.stats.get('levelId');
+            // Temporarily hardcode to load level 1 every time
+            const levelId = 1;
             const levelData = puzzleLevels.find((l) => l.levelId === levelId) || puzzleLevels[0];
 
             if (levelData.queue && levelData.queue.length > 0) {

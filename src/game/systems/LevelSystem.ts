@@ -195,7 +195,8 @@ export class LevelSystem implements System {
         this._allowNewLine = false;
 
         // Find the puzzle level based on the stats, defaulting to the first level
-        const levelId = this.game.stats.get('levelId');
+        // Temporarily hardcode to load level 1 every time
+        const levelId = 1;
         const levelData = puzzleLevels.find((l) => l.levelId === levelId) || puzzleLevels[0];
 
         // Store puzzle stats
@@ -1111,7 +1112,7 @@ export class LevelSystem implements System {
      */
     private _getSpecialType() {
         if (this.game.mode === 'puzzle') {
-            const levelId = this.game.stats.get('levelId');
+            const levelId = 1;
             const levelData = puzzleLevels.find((l) => l.levelId === levelId) || puzzleLevels[0];
             if (!levelData.allowedSpecials) return null;
         }
