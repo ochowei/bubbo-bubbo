@@ -1,5 +1,5 @@
 import gsap from 'gsap';
-import { Container, Text, Texture, TilingSprite } from 'pixi.js';
+import { Container, Graphics, Text, Texture, TilingSprite } from 'pixi.js';
 
 import { designConfig } from '../game/designConfig';
 import type { AppScreen } from '../navigation';
@@ -15,10 +15,15 @@ export type GameMode = 'endless' | 'time-attack' | 'puzzle';
 export class ModeSelectionScreen extends Container implements AppScreen {
     /** A unique identifier for the screen */
     public static SCREEN_ID = 'mode-selection';
-    /** Reuse title-screen assets (background tile, button sprites, fonts). */
-    public static assetBundles = ['title-screen'];
+    /**
+     * 'title-screen' supplies the background tile and font assets.
+     * 'game-screen' supplies the button-flat sprite used by SecondaryButton.
+     */
+    public static assetBundles = ['title-screen', 'game-screen'];
 
     private readonly _background: TilingSprite;
+    /** Coloured pill behind the title text for legibility */
+    private readonly _titleBadge: Graphics;
     private readonly _title: Text;
     private readonly _endlessBtn: SecondaryButton;
     private readonly _timeAttackBtn: SecondaryButton;
@@ -43,20 +48,17 @@ export class ModeSelectionScreen extends Container implements AppScreen {
         });
         this.addChild(this._background);
 
+        // Rounded pill behind the title so it stands out on any background
+        this._titleBadge = new Graphics();
+        this._topAnimContainer.addChild(this._titleBadge);
+
         this._title = new Text({
             text: i18n.t('modeSelectTitle'),
             style: {
                 fontSize: 60,
                 fontFamily: 'Bungee-Regular',
-                fontWeight: 'bold',
                 fill: 0xffffff,
                 align: 'center',
-                dropShadow: {
-                    color: 0x000000,
-                    blur: 4,
-                    distance: 4,
-                    alpha: 0.5,
-                },
             },
         });
         this._title.anchor.set(0.5);
@@ -126,12 +128,24 @@ export class ModeSelectionScreen extends Container implements AppScreen {
         this._background.height = h;
 
         const cx = w * 0.5;
+        const titleY = h * 0.28;
+
+        // Redraw the badge to fit behind the title text
+        const badgeW = 360;
+        const badgeH = 80;
+
+        this._titleBadge
+            .clear()
+            .roundRect(-badgeW / 2, -badgeH / 2, badgeW, badgeH, 16)
+            .fill({ color: 0x000000, alpha: 0.45 });
+        this._titleBadge.x = cx;
+        this._titleBadge.y = titleY;
 
         this._title.x = cx;
-        this._title.y = h * 0.3;
+        this._title.y = titleY;
 
         const btnSpacing = 90;
-        const baseY = h * 0.58;
+        const baseY = h * 0.56;
 
         this._endlessBtn.x = cx;
         this._endlessBtn.y = baseY;
