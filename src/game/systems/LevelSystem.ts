@@ -6,6 +6,7 @@ import { sfx } from '../../audio';
 import { normalize, scale, sub } from '../../utils/maths/point';
 import { randomRange } from '../../utils/maths/rand';
 import { boardConfig, BubbleType, isSpecialType, randomType, SpecialBubbleType } from '../boardConfig';
+import { loadPuzzleLevel, type PuzzleLevelData } from '../puzzle/PuzzleLevel';
 import { designConfig } from '../designConfig';
 import { Bubble, SpoofBubble } from '../entities/Bubble';
 import { BubbleLine, MAX_BUBBLE_INDEX } from '../entities/BubbleLine';
@@ -35,6 +36,8 @@ export class LevelSystem implements System {
     public countPerType = new Map<BubbleType, number>();
     /** An array containing all the lines in the grid. */
     public readonly lines: BubbleLine[] = [];
+    /** Fixed shot sequence for puzzle mode, populated by `_createPuzzleLevel`. */
+    public puzzleShotSequence: BubbleType[] = [];
 
     /** A set of signals that other systems can access. */
     public signals = {
@@ -128,6 +131,7 @@ export class LevelSystem implements System {
         this._newLineSpeedDecrement = 0;
         this._dropGroupIndex = 0;
         this._newLineCount = 0;
+        this.puzzleShotSequence = [];
 
         // Prevent a new line before the game is ready
         this._allowNewLine = false;
@@ -188,15 +192,23 @@ export class LevelSystem implements System {
 
     /** Create the initial bubble grid */
     public createLevel() {
-        // Populating grid
-        const count = this.startingLines;
+        if (this.game.mode === 'puzzle') {
+            const data = loadPuzzleLevel(1);
 
-        // Add multiple new lines
-        for (let l = 0; l < count; l++) {
-            this.addLine();
+            this._createPuzzleLevel(data);
+        } else {
+            // Populating grid
+            const count = this.startingLines;
+
+            // Add multiple new lines
+            for (let l = 0; l < count; l++) {
+                this.addLine();
+            }
         }
 
         // Hide the grid container and move it above, out of view
+        const count = this.lines.length;
+
         this._gridContainer.alpha = 0;
         this._gridContainer.y = -count * boardConfig.bubbleSize;
 
@@ -204,6 +216,36 @@ export class LevelSystem implements System {
         this.lines.forEach((line) => {
             line.updatePosRatio(1);
         });
+    }
+
+    /**
+     * Populate the grid from a fixed puzzle level data object.
+     * `lines[0]` maps to the topmost row (j=0); subsequent entries move downward.
+     * @param data - The validated puzzle level data.
+     */
+    private _createPuzzleLevel(data: PuzzleLevelData) {
+        this.puzzleShotSequence = [...data.shotSequence];
+
+        for (let j = 0; j < data.lines.length; j++) {
+            const even = j % 2 === 0;
+            const line = pool.get(BubbleLine);
+
+            line.init(j, this.game, even);
+            line.y = boardConfig.screenTop + boardConfig.bubbleSize * j;
+
+            const startingI = even ? 0 : 1;
+
+            data.lines[j].forEach((type, slot) => {
+                if (!type) return;
+                const i = startingI + slot * 2;
+                const bubble = this._createGridBubble(type, i, j);
+
+                line.addBubble(bubble, this.calculateBubbleX(bubble));
+                this._gridContainer.addChild(bubble.view);
+            });
+
+            this.lines.push(line);
+        }
     }
 
     /**
@@ -557,8 +599,8 @@ export class LevelSystem implements System {
         // Add the shimmer tween to the pause system
         pause.addTween(tween);
 
-        // Start adding new lines once the first bubble has connected
-        if (!this._allowNewLine) {
+        // Start adding new lines once the first bubble has connected (endless/time-attack only)
+        if (!this._allowNewLine && this.game.mode !== 'puzzle') {
             this._allowNewLine = true;
             this.addLineToGridTop();
         }
