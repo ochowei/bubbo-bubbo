@@ -605,8 +605,9 @@ export class LevelSystem implements System {
             this.addLineToGridTop();
         }
 
-        // Prevents new bubbles from floating at next position when time is stopped
-        line.updatePosRatio(this._animOffsetRatio);
+        // Prevents new bubbles from floating at next position when time is stopped.
+        // In puzzle mode there is no sliding animation so always use ratio 1.
+        line.updatePosRatio(this.game.mode === 'puzzle' ? 1 : this._animOffsetRatio);
     }
 
     /**
