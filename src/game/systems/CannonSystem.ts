@@ -35,9 +35,9 @@ export class CannonSystem implements System {
     /** An array of bubble reserves. */
     public bubbleReserves: BubbleReserve[] = [];
     /**  An array of bubble types relative to the bubble reserves. */
-    public reserveBubbleTypes: BubbleType[] = [];
+    public reserveBubbleTypes: (BubbleType | 'empty')[] = [];
     /** The type of the bubble currently in the cannon. */
-    public currentBubbleType!: BubbleType;
+    public currentBubbleType!: BubbleType | 'empty';
 
     /** A set of signals that other systems can access. */
     public signals = {
@@ -56,6 +56,8 @@ export class CannonSystem implements System {
     private readonly _cannonForward = new Point();
     /** The number of shot projectiles. */
     private _shotProjectiles = 0;
+    /** Current index for consuming puzzle queue bubbles. */
+    private _puzzleQueueIndex = 0;
 
     /** Called when the system is added to the game. */
     public init() {
@@ -114,6 +116,7 @@ export class CannonSystem implements System {
 
     /** Called prior to the `start` function at the beginning of the game. */
     public awake() {
+        this._puzzleQueueIndex = 0;
         this._emptyShots();
     }
 
@@ -123,6 +126,7 @@ export class CannonSystem implements System {
         this.cannon.rotation = 0;
         this._shotProjectiles = 0;
         this._projectile = null;
+        this._puzzleQueueIndex = 0;
     }
 
     /** The x-position of the cannon in game space. */
@@ -160,6 +164,7 @@ export class CannonSystem implements System {
     private _fire(e: FederatedPointerEvent) {
         // If a projectile already exists, return and do not fire another
         if (this._projectile) return;
+        if (this.currentBubbleType === 'empty') return;
 
         // Play audio at reduced speed to simulate a different sound, easy way to get multiple sfx out of one file
         sfx.play('audio/bubble-land-sfx.wav', {
@@ -228,14 +233,14 @@ export class CannonSystem implements System {
      */
     private _loadNextShot() {
         // Set the current selected bubble type to the first reserve type or create a new bubble if the array is empty
-        this.currentBubbleType = this.reserveBubbleTypes[0] ?? this._newBubble();
+        this.currentBubbleType = this.reserveBubbleTypes[0] ?? this._generateNextBubble();
 
         // Get a reference to the `reserveBubbleTypes` array
         const res = this.reserveBubbleTypes;
 
         // Shift the elements of the `reserveBubbleTypes` array to the left, creating a new bubble type if the array becomes empty
         for (let i = 0; i < res.length; i++) {
-            res[i] = res[i + 1] ?? this._newBubble();
+            res[i] = res[i + 1] ?? this._generateNextBubble();
             this.bubbleReserves[i].type = res[i];
         }
 
@@ -276,6 +281,22 @@ export class CannonSystem implements System {
         );
     }
 
+    /** Generate the next cannon bubble, with puzzle mode deterministic behaviour. */
+    private _generateNextBubble(): BubbleType | 'empty' {
+        if (this.game.mode !== 'puzzle') return this._newBubble();
+
+        const puzzleQueue = this.game.systems.get(LevelSystem).activePuzzleLevel?.queue;
+
+        if (!puzzleQueue || this._puzzleQueueIndex >= puzzleQueue.length) {
+            return 'empty';
+        }
+
+        const next = puzzleQueue[this._puzzleQueueIndex];
+        this._puzzleQueueIndex += 1;
+
+        return next;
+    }
+
     /**
      * Generate a new bubble type based on the chances of each type from the LevelSystem's countPerType map.
      * @returns The generated bubble type.
@@ -286,7 +307,7 @@ export class CannonSystem implements System {
         // Create a new instance of a map and copy the level system's countPerType map
         const chancesPerType = new Map(levelSystem.countPerType);
 
-        if (this.currentBubbleType !== undefined) {
+        if (this.currentBubbleType !== undefined && this.currentBubbleType !== 'empty') {
             // Making sure the player always have choice between 2 different bubbles
             chancesPerType.set(this.currentBubbleType, 0);
         }
