@@ -4,6 +4,7 @@ import { Container, Texture, Ticker, TilingSprite } from 'pixi.js';
 import { designConfig } from '../game/designConfig';
 import { Game } from '../game/Game';
 import type { AppScreen } from '../navigation';
+import type { GameMode } from './ModeSelectionScreen';
 
 /** The screen that contains all the gameplay */
 export class GameScreen extends Container implements AppScreen {
@@ -34,6 +35,14 @@ export class GameScreen extends Container implements AppScreen {
         this._game = new Game();
         this._game.init();
         this.addChild(this._game.stage);
+    }
+
+    /**
+     * Called before the screen is shown, receives navigation data.
+     * @param data - Optional data passed from the previous screen.
+     */
+    public prepare(data?: { mode?: GameMode }) {
+        this._game.mode = data?.mode ?? 'endless';
     }
 
     /** Called when the screen is being shown. */

@@ -1,5 +1,5 @@
 import gsap from 'gsap';
-import { Container, Graphics, NineSliceSprite, Sprite, Texture } from 'pixi.js';
+import { Container, Graphics, NineSliceSprite, Sprite, Text, Texture } from 'pixi.js';
 
 import { IconButton } from '../../ui/buttons/IconButton';
 import { HelperPanel } from '../../ui/HelperPanel';
@@ -52,6 +52,13 @@ export class HudSystem implements System {
 
     /** The mask is used to keep visual elements from rendering outside of the given game bounds */
     private _mask!: Graphics;
+
+    /** Countdown timer text shown in time-attack mode */
+    private _timerText!: Text;
+    /** Remaining time in seconds for time-attack mode */
+    private _timeLeft = 0;
+    /** Whether the current game is in time-attack mode */
+    private _isTimeAttack = false;
 
     /** A flag to determine if the tutorial view has been seen. */
     private _hasShownHelper = false;
@@ -138,6 +145,20 @@ export class HudSystem implements System {
         this._helperPanel = new HelperPanel();
         this._helperPanel.view.y = -designConfig.content.height + 200;
 
+        // Create the countdown timer for time-attack mode
+        this._timerText = new Text({
+            style: {
+                fontSize: 48,
+                fontWeight: '900',
+                fontFamily: 'Bungee-Regular',
+                fill: 0xffffff,
+                stroke: { color: 0x000000, width: 6 },
+                align: 'center',
+            },
+        });
+        this._timerText.anchor.set(0.5);
+        this._timerText.visible = false;
+
         // Add hud to containers
         this._decorContainer.addChild(
             this._mask,
@@ -154,6 +175,7 @@ export class HudSystem implements System {
             this._helperPanel.view,
             this.cannonContainer,
             this._pauseButton,
+            this._timerText,
         );
 
         // Designate the mask to the game hud
@@ -178,6 +200,16 @@ export class HudSystem implements System {
         this._updateTopTrayHeight();
         // Show the game hud
         this._gameHudContainer.visible = true;
+
+        // Set up countdown timer for time-attack mode
+        this._isTimeAttack = this.game.mode === 'time-attack';
+        if (this._isTimeAttack) {
+            this._timeLeft = 60;
+            this._timerText.text = '60';
+            this._timerText.visible = true;
+        } else {
+            this._timerText.visible = false;
+        }
     }
 
     /** Called at the start of the game. */
@@ -251,12 +283,30 @@ export class HudSystem implements System {
     public update(delta: number) {
         // Update laser line
         this._laserLine.update(delta);
+
+        // Tick down the countdown timer in time-attack mode
+        if (this._isTimeAttack) {
+            this._timeLeft -= delta / 60;
+            const secondsLeft = Math.max(0, Math.ceil(this._timeLeft));
+
+            this._timerText.text = String(secondsLeft);
+
+            if (this._timeLeft <= 0) {
+                this._isTimeAttack = false;
+                this.game.gameOver();
+            }
+        }
     }
 
     /** Resets the state of the system back to its initial state. */
     public reset() {
         // Reset the score back to zero
         this._scoreCounter.setScore(0);
+
+        // Reset the countdown timer
+        this._isTimeAttack = false;
+        this._timeLeft = 0;
+        this._timerText.visible = false;
 
         // Destroy all point toasters
         removeAllFromArray(this._toasterList, (toaster: PointToaster) => {
@@ -289,6 +339,10 @@ export class HudSystem implements System {
         // Position the score counter
         this._scoreCounter.view.x = designConfig.content.width * 0.5 - this._scoreCounter.view.width - 30;
         this._scoreCounter.view.y = -70;
+
+        // Position the countdown timer at the top-left of the HUD
+        this._timerText.x = -designConfig.content.width * 0.5 + 60;
+        this._timerText.y = -designConfig.content.height + 45;
     }
 
     /** Updates the height of the top tray based on the current height of the main container. */
