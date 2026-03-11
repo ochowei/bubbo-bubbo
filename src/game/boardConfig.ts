@@ -24,7 +24,7 @@ const MAX_BUBBLES_PER_LINE = 13;
 const BUBBLE_OVERFLOW = 0.5;
 
 /** The size of each bubble. */
-const BUBBLE_SIZE = designConfig.content.width / MAX_BUBBLES_PER_LINE;
+const BUBBLE_SIZE = designConfig.content.width / (MAX_BUBBLES_PER_LINE - BUBBLE_OVERFLOW * 2);
 
 /** A Map of each regular bubble type relative to its color. */
 const bubbleTypeToColor: Record<RegularBubbleType, number> = {
