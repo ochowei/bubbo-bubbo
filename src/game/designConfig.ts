@@ -21,6 +21,4 @@ export const designConfig = {
     decorCountDesktop: 6,
     /** How many background decor visuals are allowed to be created on mobile. */
     decorCountMobile: 3,
-    /** The url used to redirect the user to the open games github page */
-    forkMeURL: 'https://github.com/pixijs/open-games',
 };
