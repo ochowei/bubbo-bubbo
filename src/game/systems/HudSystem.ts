@@ -7,6 +7,7 @@ import { LaserLine } from '../../ui/LaserLine';
 import { PointToaster } from '../../ui/PointToaster';
 import { ScoreCounter } from '../../ui/ScoreCounter';
 import { Title } from '../../ui/Title';
+import { i18n } from '../../utils/i18n';
 import { removeAllFromArray, removeFromArray } from '../../utils/utils';
 import { boardConfig } from '../boardConfig';
 import { designConfig } from '../designConfig';
@@ -59,6 +60,9 @@ export class HudSystem implements System {
     private _timeLeft = 0;
     /** Whether the current game is in time-attack mode */
     private _isTimeAttack = false;
+
+    /** Mode title text shown during gameplay */
+    private _modeTitleText!: Text;
 
     /** A flag to determine if the tutorial view has been seen. */
     private _hasShownHelper = false;
@@ -159,6 +163,20 @@ export class HudSystem implements System {
         this._timerText.anchor.set(0.5);
         this._timerText.visible = false;
 
+        // Create the mode title text shown during gameplay
+        this._modeTitleText = new Text({
+            style: {
+                fontSize: 28,
+                fontWeight: '900',
+                fontFamily: 'Bungee-Regular',
+                fill: 0xffffff,
+                stroke: { color: 0x000000, width: 5 },
+                align: 'center',
+            },
+        });
+        this._modeTitleText.anchor.set(0.5);
+        this._modeTitleText.visible = false;
+
         // Add hud to containers
         this._decorContainer.addChild(
             this._mask,
@@ -176,6 +194,7 @@ export class HudSystem implements System {
             this.cannonContainer,
             this._pauseButton,
             this._timerText,
+            this._modeTitleText,
         );
 
         // Designate the mask to the game hud
@@ -209,6 +228,19 @@ export class HudSystem implements System {
             this._timerText.visible = true;
         } else {
             this._timerText.visible = false;
+        }
+
+        // Show mode title for time-attack and endless modes
+        const mode = this.game.mode;
+
+        if (mode === 'time-attack') {
+            this._modeTitleText.text = i18n.t('modeTimeAttack');
+            this._modeTitleText.visible = true;
+        } else if (mode === 'endless') {
+            this._modeTitleText.text = i18n.t('modeEndless');
+            this._modeTitleText.visible = true;
+        } else {
+            this._modeTitleText.visible = false;
         }
     }
 
@@ -307,6 +339,7 @@ export class HudSystem implements System {
         this._isTimeAttack = false;
         this._timeLeft = 0;
         this._timerText.visible = false;
+        this._modeTitleText.visible = false;
 
         // Destroy all point toasters
         removeAllFromArray(this._toasterList, (toaster: PointToaster) => {
@@ -343,6 +376,10 @@ export class HudSystem implements System {
         // Position the countdown timer at the top-left of the HUD
         this._timerText.x = -designConfig.content.width * 0.5 + 60;
         this._timerText.y = -designConfig.content.height + 45;
+
+        // Position the mode title centered at the top of the HUD
+        this._modeTitleText.x = 0;
+        this._modeTitleText.y = -designConfig.content.height + 45;
     }
 
     /** Updates the height of the top tray based on the current height of the main container. */
