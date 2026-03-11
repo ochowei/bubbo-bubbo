@@ -79,7 +79,7 @@ export class Game {
 
     /** Initialisation point of the Game, used to add systems to the game. */
     public init() {
-        // Add systems to system runner
+        // Add common systems to system runner
         this.systems.add(SpaceDecorSystem);
         this.systems.add(PauseSystem);
         this.systems.add(PhysicsSystem);
@@ -90,6 +90,12 @@ export class Game {
         this.systems.add(CannonSystem);
         this.systems.add(EffectsSystem);
         this.systems.add(ScoreSystem);
+
+        if (this.mode === 'endless') {
+            // Load endless specific systems here
+        } else if (this.mode === 'puzzle') {
+            // Load puzzle specific systems here
+        }
 
         // Initialise systems
         this.systems.init();

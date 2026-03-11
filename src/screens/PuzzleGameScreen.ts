@@ -4,17 +4,16 @@ import { Container, Texture, Ticker, TilingSprite } from 'pixi.js';
 import { designConfig } from '../game/designConfig';
 import { Game } from '../game/Game';
 import type { AppScreen } from '../navigation';
-import type { GameMode } from './ModeSelectionScreen';
 
-/** The screen that contains all the gameplay */
-export class GameScreen extends Container implements AppScreen {
+/** The screen that contains all the puzzle gameplay */
+export class PuzzleGameScreen extends Container implements AppScreen {
     /** A unique identifier for the screen */
-    public static SCREEN_ID = 'game';
+    public static readonly SCREEN_ID = 'puzzle-game';
     /** An array of bundle IDs for dynamic asset loading. */
-    public static assetBundles = ['game-screen'];
+    public static readonly assetBundles = ['game-screen'];
 
     private readonly _background: TilingSprite;
-    private readonly _game: Game;
+    private _game!: Game;
 
     constructor() {
         super();
@@ -30,19 +29,18 @@ export class GameScreen extends Container implements AppScreen {
             },
         });
         this.addChild(this._background);
-
-        // Create an instance of the game and initialise
-        this._game = new Game();
-        this._game.init();
-        this.addChild(this._game.stage);
     }
 
     /**
      * Called before the screen is shown, receives navigation data.
      * @param data - Optional data passed from the previous screen.
      */
-    public prepare(data?: { mode?: GameMode }) {
-        this._game.mode = data?.mode ?? 'endless';
+    public prepare() {
+        // Create an instance of the game and initialise
+        this._game = new Game();
+        this._game.mode = 'puzzle';
+        this._game.init();
+        this.addChild(this._game.stage);
     }
 
     /** Called when the screen is being shown. */
@@ -69,6 +67,9 @@ export class GameScreen extends Container implements AppScreen {
         await gsap.to(this, { alpha: 0, duration: 0.2, ease: 'linear' });
         // Reset the game
         this._game.reset();
+
+        // Remove game stage so it can be re-instantiated in prepare
+        this.removeChild(this._game.stage);
     }
 
     /**
@@ -90,6 +91,8 @@ export class GameScreen extends Container implements AppScreen {
         this._background.height = h;
 
         // Forward screen dimensions to the game
-        this._game.resize(w, h);
+        if (this._game) {
+            this._game.resize(w, h);
+        }
     }
 }
