@@ -16,7 +16,7 @@ import { Porthole } from '../ui/Porthole';
 import { Title } from '../ui/Title';
 import { i18n } from '../utils/i18n';
 import { throttle } from '../utils/throttle';
-import { GameScreen } from './GameScreen';
+import { ModeSelectionScreen } from './ModeSelectionScreen';
 
 /** The screen presented at the start, after loading. */
 export class TitleScreen extends Container implements AppScreen {
@@ -257,8 +257,8 @@ export class TitleScreen extends Container implements AppScreen {
         });
 
         this._playBtn.onPress.connect(() => {
-            // Go to game screen when user presses play button
-            navigation.goToScreen(GameScreen);
+            // Go to mode selection screen when user presses play button
+            navigation.goToScreen(ModeSelectionScreen);
         });
 
         this._bottomAnimContainer.addChild(this._playBtn);
