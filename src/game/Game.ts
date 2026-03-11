@@ -4,6 +4,7 @@ import { Container, Rectangle } from 'pixi.js';
 
 import { navigation } from '../navigation';
 import { ResultScreen } from '../screens/ResultScreen';
+import type { GameMode } from '../screens/ModeSelectionScreen';
 import { boardConfig } from './boardConfig';
 import { Stats } from './Stats';
 import { SystemRunner } from './SystemRunner';
@@ -34,6 +35,8 @@ export class Game {
     public stats: Stats;
     /** A flag to determine if the game has reached the "GAMEOVER" state */
     public isGameOver = false;
+    /** The current game mode */
+    public mode: GameMode = 'endless';
 
     /** The hit area to be used by the `hitContainer`. */
     private readonly _hitArea: Rectangle;
