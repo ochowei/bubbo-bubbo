@@ -237,12 +237,17 @@ export class LevelSystem implements System {
 
         this._allowNewLine = false;
 
-        level.grid.forEach((row, gridJ) => {
-            const isEven = gridJ % 2 === 0;
+        // Puzzle data convention: grid[0] is the bottom-most row.
+        const rowCount = level.grid.length;
+
+        level.grid.forEach((row, rowIndexFromBottom) => {
+            const gridJ = rowCount - 1 - rowIndexFromBottom;
+            const isEven = rowIndexFromBottom % 2 === 0;
+
             const line = pool.get(BubbleLine);
             line.init(gridJ, this.game, isEven);
             line.y = boardConfig.screenTop + boardConfig.bubbleSize * gridJ;
-            this.lines.push(line);
+            this.lines[gridJ] = line;
 
             row.forEach((bubbleType, index) => {
                 if (!bubbleType) return;
@@ -257,7 +262,7 @@ export class LevelSystem implements System {
         });
 
         this._gridContainer.alpha = 0;
-        this._gridContainer.y = -level.grid.length * boardConfig.bubbleSize;
+        this._gridContainer.y = -rowCount * boardConfig.bubbleSize;
 
         this.lines.forEach((line) => {
             line.updatePosRatio(1);
