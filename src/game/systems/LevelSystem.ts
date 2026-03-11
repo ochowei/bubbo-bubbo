@@ -1097,8 +1097,9 @@ export class LevelSystem implements System {
         this._allowNewLine = false;
 
         // Build all required rows first.
+        // `addLine(false)` requires an existing bottom row, so seed with the first line.
         for (let j = 0; j < puzzleLevel.grid.length; j++) {
-            this.addLine(false);
+            this.addLine(j === 0);
         }
 
         puzzleLevel.grid.forEach((row, j) => {
