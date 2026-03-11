@@ -41,8 +41,9 @@ export class GameScreen extends Container implements AppScreen {
      * Called before the screen is shown, receives navigation data.
      * @param data - Optional data passed from the previous screen.
      */
-    public prepare(data?: { mode?: GameMode }) {
+    public prepare(data?: { mode?: GameMode; levelId?: number }) {
         this._game.mode = data?.mode ?? 'endless';
+        this._game.puzzleLevelId = Math.max(1, data?.levelId ?? 1);
     }
 
     /** Called when the screen is being shown. */

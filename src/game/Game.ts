@@ -37,6 +37,8 @@ export class Game {
     public isGameOver = false;
     /** The current game mode */
     public mode: GameMode = 'endless';
+    /** Active puzzle level id (1-indexed). */
+    public puzzleLevelId = 1;
 
     /** The hit area to be used by the `hitContainer`. */
     private readonly _hitArea: Rectangle;

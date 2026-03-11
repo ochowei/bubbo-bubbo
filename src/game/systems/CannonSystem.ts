@@ -56,6 +56,8 @@ export class CannonSystem implements System {
     private readonly _cannonForward = new Point();
     /** The number of shot projectiles. */
     private _shotProjectiles = 0;
+    /** Current index into the active puzzle queue, if any. */
+    private _puzzleQueueIndex = 0;
 
     /** Called when the system is added to the game. */
     public init() {
@@ -123,6 +125,7 @@ export class CannonSystem implements System {
         this.cannon.rotation = 0;
         this._shotProjectiles = 0;
         this._projectile = null;
+        this._puzzleQueueIndex = 0;
     }
 
     /** The x-position of the cannon in game space. */
@@ -282,6 +285,18 @@ export class CannonSystem implements System {
      */
     private _newBubble() {
         const levelSystem = this.game.systems.get(LevelSystem);
+
+        if (this.game.mode === 'puzzle') {
+            const queue = levelSystem.getActivePuzzleLevel()?.queue;
+
+            if (queue && queue.length > this._puzzleQueueIndex) {
+                const queueType = queue[this._puzzleQueueIndex];
+
+                this._puzzleQueueIndex += 1;
+
+                return queueType;
+            }
+        }
 
         // Create a new instance of a map and copy the level system's countPerType map
         const chancesPerType = new Map(levelSystem.countPerType);

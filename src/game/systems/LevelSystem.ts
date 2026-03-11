@@ -11,6 +11,8 @@ import { Bubble, SpoofBubble } from '../entities/Bubble';
 import { BubbleLine, MAX_BUBBLE_INDEX } from '../entities/BubbleLine';
 import type { PhysicsBody } from '../entities/PhysicsBody';
 import type { Game } from '../Game';
+import { puzzleLevels } from '../puzzle/puzzleLevels';
+import type { PuzzleLevel } from '../puzzle/types';
 import { pool } from '../Pool';
 import type { System } from '../SystemRunner';
 import { AimSystem } from './AimSystem';
@@ -71,6 +73,8 @@ export class LevelSystem implements System {
     private _newLineSpeedDecrement = 0;
     /** A value that notes how many new lines have been created from the level generation. */
     private _newLineCount = 0;
+    /** Current puzzle level configuration used when game mode is puzzle. */
+    private _activePuzzleLevel: PuzzleLevel | null = null;
 
     /** Called when the system is added to the game. */
     public init() {
@@ -188,22 +192,20 @@ export class LevelSystem implements System {
 
     /** Create the initial bubble grid */
     public createLevel() {
-        // Populating grid
-        const count = this.startingLines;
+        if (this.game.mode === 'puzzle') {
+            this._createPuzzleLevel();
 
-        // Add multiple new lines
-        for (let l = 0; l < count; l++) {
-            this.addLine();
+            return;
         }
 
-        // Hide the grid container and move it above, out of view
-        this._gridContainer.alpha = 0;
-        this._gridContainer.y = -count * boardConfig.bubbleSize;
+        this._activePuzzleLevel = null;
 
-        // Loop through the new lines and reset their position ratio
-        this.lines.forEach((line) => {
-            line.updatePosRatio(1);
-        });
+        this._createProceduralLevel();
+    }
+
+    /** Returns the active puzzle level for puzzle mode, otherwise `null`. */
+    public getActivePuzzleLevel() {
+        return this._activePuzzleLevel;
     }
 
     /**
@@ -557,8 +559,8 @@ export class LevelSystem implements System {
         // Add the shimmer tween to the pause system
         pause.addTween(tween);
 
-        // Start adding new lines once the first bubble has connected
-        if (!this._allowNewLine) {
+        // Start adding new lines once the first bubble has connected (non-puzzle modes only)
+        if (this.game.mode !== 'puzzle' && !this._allowNewLine) {
             this._allowNewLine = true;
             this.addLineToGridTop();
         }
@@ -1054,5 +1056,81 @@ export class LevelSystem implements System {
 
         // Otherwise return null.
         return null;
+    }
+
+
+    /** Create the default procedural board used by non-puzzle modes. */
+    private _createProceduralLevel() {
+        // Populating grid
+        const count = this.startingLines;
+
+        // Add multiple new lines
+        for (let l = 0; l < count; l++) {
+            this.addLine();
+        }
+
+        // Hide the grid container and move it above, out of view
+        this._gridContainer.alpha = 0;
+        this._gridContainer.y = -count * boardConfig.bubbleSize;
+
+        // Loop through the new lines and reset their position ratio
+        this.lines.forEach((line) => {
+            line.updatePosRatio(1);
+        });
+    }
+
+    /** Create a fixed puzzle layout instead of procedural lines. */
+    private _createPuzzleLevel() {
+        const requestedLevelId = this.game.puzzleLevelId;
+        const puzzleLevel = puzzleLevels.find((level) => level.levelId === requestedLevelId) ?? puzzleLevels[0];
+
+        this._activePuzzleLevel = puzzleLevel ?? null;
+
+        if (!puzzleLevel) {
+            console.warn('Puzzle mode enabled but no puzzle levels were found; falling back to procedural level generation.');
+            this._createProceduralLevel();
+
+            return;
+        }
+
+        this._allowNewLine = false;
+
+        // Build all required rows first.
+        for (let j = 0; j < puzzleLevel.grid.length; j++) {
+            this.addLine(false);
+        }
+
+        puzzleLevel.grid.forEach((row, j) => {
+            const line = this.getLine(j);
+
+            if (!line) return;
+
+            const lineOffset = line.isEven ? 0 : 1;
+
+            row.forEach((type, index) => {
+                if (!type) return;
+                if (!puzzleLevel.allowedSpecials && isSpecialType(type)) return;
+
+                const gridI = lineOffset + index * 2;
+
+                if (gridI > MAX_BUBBLE_INDEX) return;
+
+                const bubble = this._createGridBubble(type, gridI, j);
+
+                line.addBubble(bubble, this.calculateBubbleX(bubble));
+                this._gridContainer.addChild(bubble.view);
+            });
+        });
+
+        const count = this.lines.length;
+
+        // Hide the grid container and move it above, out of view
+        this._gridContainer.alpha = 0;
+        this._gridContainer.y = -count * boardConfig.bubbleSize;
+
+        // Loop through the new lines and reset their position ratio
+        this.lines.forEach((line) => {
+            line.updatePosRatio(1);
+        });
     }
 }

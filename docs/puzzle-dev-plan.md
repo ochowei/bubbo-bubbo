@@ -9,8 +9,8 @@
 | 里程碑 | 內容 | 預估天數 | 狀態 |
 |--------|------|----------|------|
 | M1 | 規格定義與資料模型 | 1 天 | ✅ 完成 |
-| M2 | LevelSystem puzzle 化 | 2 天 | ⬅️ 下一步 |
-| M3 | 發射次數與 Par 判定 | 1~2 天 | 待辦 |
+| M2 | LevelSystem puzzle 化 | 2 天 | ✅ 完成 |
+| M3 | 發射次數與 Par 判定 | 1~2 天 | ⬅️ 下一步 |
 | M4 | 通關／失敗條件 | 1~2 天 | 待辦 |
 | M5 | UI/UX | 1~2 天 | 待辦 |
 | M6 | 測試與關卡內容生產 | 2 天+ | 待辦 |
@@ -52,7 +52,7 @@ interface PuzzleLevel {
 
 ---
 
-## M2 — LevelSystem Puzzle 化（2 天）⬅️ 下一步
+## M2 — LevelSystem Puzzle 化（2 天）✅ 已完成
 
 **目標**：Puzzle 模式走固定版圖，關閉動態新增行。
 
@@ -77,13 +77,13 @@ interface PuzzleLevel {
 
 ### 驗收標準
 
-- [ ] 同一關卡 ID 每次進入都呈現相同版圖與開局泡泡
-- [ ] 非 puzzle 模式行為不受影響
-- [ ] 若 `allowedSpecials: false`，格子內確實無 special bubble
+- [x] 同一關卡 ID 每次進入都呈現相同版圖與開局泡泡
+- [x] 非 puzzle 模式行為不受影響
+- [x] 若 `allowedSpecials: false`，格子內確實無 special bubble
 
 ---
 
-## M3 — 發射次數與 Par 判定（1~2 天）
+## M3 — 發射次數與 Par 判定（1~2 天）⬅️ 下一步
 
 **目標**：建立 puzzle 模式核心 KPI。
 
