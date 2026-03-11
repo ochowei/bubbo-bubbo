@@ -221,7 +221,7 @@ export class HudSystem implements System {
         this._gameHudContainer.visible = true;
 
         // Set up countdown timer for time-attack mode
-        this._isTimeAttack = this.game.mode === 'time-attack';
+        this._isTimeAttack = this.game.mode === 'puzzle';
         if (this._isTimeAttack) {
             this._timeLeft = 60;
             this._timerText.text = '60';
@@ -233,7 +233,7 @@ export class HudSystem implements System {
         // Show mode title for time-attack and endless modes
         const mode = this.game.mode;
 
-        if (mode === 'time-attack') {
+        if (mode === 'puzzle') {
             this._modeTitleText.text = i18n.t('modeTimeAttack');
             this._modeTitleText.visible = true;
         } else if (mode === 'endless') {
