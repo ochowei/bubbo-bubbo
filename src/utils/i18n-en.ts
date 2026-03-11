@@ -6,7 +6,6 @@ export const i18nDict = {
     gameTitle: 'BUBBO',
     gameSubtitle: 'SPACE MACHINE',
     titlePlay: 'SHOOT BUBBLES!',
-    forkGithub: 'Fork me\non Github',
     helperMobile: 'Hold to aim\nRelease to shoot!',
     helperDesktop: 'Move mouse to aim\nLeft click to shoot!',
     paused: 'GAME PAUSED',
