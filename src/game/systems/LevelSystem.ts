@@ -1058,7 +1058,6 @@ export class LevelSystem implements System {
         return null;
     }
 
-
     /** Create the default procedural board used by non-puzzle modes. */
     private _createProceduralLevel() {
         // Populating grid
@@ -1087,7 +1086,9 @@ export class LevelSystem implements System {
         this._activePuzzleLevel = puzzleLevel ?? null;
 
         if (!puzzleLevel) {
-            console.warn('Puzzle mode enabled but no puzzle levels were found; falling back to procedural level generation.');
+            console.warn(
+                'Puzzle mode enabled but no puzzle levels were found; falling back to procedural level generation.',
+            );
             this._createProceduralLevel();
 
             return;
