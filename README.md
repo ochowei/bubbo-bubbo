@@ -50,6 +50,51 @@ By making the file open source, we hope to provide an even more comprehensive le
 
 > Please note that the design file is only available as a read-only version. This means you can view and inspect the file, but you cannot make changes or use any of the assets for your own projects.
 
+# Controls
+
+## Current Input Method
+
+The game uses PixiJS's unified pointer event system, which handles both mouse and touch input transparently:
+
+| Event | Action |
+|-------|--------|
+| Move pointer / drag finger | Aim the cannon |
+| Click / tap | Fire a bubble |
+
+The `AimSystem` listens to `pointermove` to update the trajectory preview, while `CannonSystem` listens to `pointertap` to fire. Because PixiJS normalises mouse and touch into the same `FederatedPointerEvent`, the game already works on touchscreen devices out of the box.
+
+## Virtual Joystick (Extension Idea)
+
+A **virtual joystick** is a common mobile UI pattern where an on-screen thumbstick replaces raw pointer-position input. Instead of tapping anywhere to aim, the player drags a joystick thumb from a fixed base, and the drag direction/magnitude drives the cannon angle.
+
+### Why it is a good fit for this project
+
+- The game canvas is designed at **428 × 925 px** (portrait phone), so screen real-estate for a thumb-zone is plentiful at the bottom.
+- Dragging a joystick avoids the problem of the player's finger **obscuring the aim line** when tapping near the cannon.
+- Implementing one is an excellent exercise in **combining PixiJS UI components with the existing System architecture** — a perfect next step after reading the codebase.
+
+### How to implement it
+
+A virtual joystick would integrate cleanly as a new system (`JoystickSystem`) or as an extension of `CannonSystem`:
+
+1. **Render the joystick** — create a base `Sprite` and a thumb `Sprite`, position them in the lower-left area of `HudSystem`'s view.
+2. **Track drag input** — listen to `pointerdown` / `pointermove` / `pointerup` on the base container; clamp the thumb offset to the joystick radius.
+3. **Convert offset to angle** — `Math.atan2(thumbOffsetY, thumbOffsetX)` produces the same radian angle that `CannonSystem._calculateAngle()` already uses.
+4. **Drive the cannon** — call `cannonSystem.setAngle(angle)` (a small public method you expose) instead of deriving the angle from the global pointer position.
+5. **Fire on release or via a separate button** — a dedicated "Fire" button alongside the joystick gives cleaner one-handed play.
+
+```
+┌──────────────────────────────┐
+│        [ bubble grid ]       │
+│                              │
+│         [ cannon ]           │
+│                              │
+│  ◉ joystick      [ FIRE ]    │  ← bottom control zone
+└──────────────────────────────┘
+```
+
+Because the game logic only cares about the *angle* fed into the cannon, swapping or layering input methods requires no changes to `PhysicsSystem`, `AimSystem`'s trajectory calculation, or `LevelSystem`. This loose coupling is intentional and is a good example of the **System pattern** described in [`docs/architecture.md`](docs/architecture.md).
+
 # Usage
 Feel free to use this project as a reference for your own game development. Use the code comments to understand how the game works and experiment by making changes to the code to see how it affects the game. This project is designed to be a starting point for your own learning and development journey with PixiJS.
 
