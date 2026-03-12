@@ -3,7 +3,6 @@ import { Point } from 'pixi.js';
 import { Container, Rectangle } from 'pixi.js';
 
 import { navigation } from '../navigation';
-import { ResultScreen } from '../screens/ResultScreen';
 import type { GameMode } from '../screens/ModeSelectionScreen';
 import { boardConfig } from './boardConfig';
 import { Stats } from './Stats';
@@ -121,9 +120,11 @@ export class Game {
         await this.systems.get(HudSystem).closeHud();
         // Hide the game container to prevent it from being viewed behind the closed hud when the screen fades out
         this.gameContainer.visible = false;
-        gsap.delayedCall(1, () => {
+        gsap.delayedCall(1, async () => {
             // Navigate to the ResultScreen after a 1 second delay
             // Send all relevant user stats
+            const { ResultScreen } = await import('../screens/ResultScreen');
+
             navigation.goToScreen(ResultScreen, {
                 score: this.stats.get('score'),
                 popped: this.stats.get('bubblesPopped'),
