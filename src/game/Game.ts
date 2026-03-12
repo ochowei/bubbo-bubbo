@@ -130,6 +130,7 @@ export class Game {
                 powerups: this.stats.get('powerupsUsed'),
                 combo: this.stats.get('bestCombo'),
                 highscore: this.stats.get('highscore'),
+                mode: this.mode,
             });
         });
     }

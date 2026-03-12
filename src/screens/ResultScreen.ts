@@ -8,7 +8,9 @@ import { IconButton } from '../ui/buttons/IconButton';
 import { PrimaryButton } from '../ui/buttons/PrimaryButton';
 import { Porthole } from '../ui/Porthole';
 import { i18n } from '../utils/i18n';
-import { GameScreen } from './GameScreen';
+import { EndlessGameScreen } from './EndlessGameScreen';
+import type { GameMode } from './ModeSelectionScreen';
+import { TimeAttackGameScreen } from './TimeAttackGameScreen';
 import { TitleScreen } from './TitleScreen';
 
 /** The `ResultsData` interface represents the data of the results screen. */
@@ -23,6 +25,8 @@ export interface ResultsData {
     powerups: number;
     /** The highscore achieved in the game, or the one that is stored in localstorage. */
     highscore: number;
+    /** The game mode that was played. */
+    mode?: GameMode;
 }
 
 /** The `StatView` class represents a visual representation of a game stats. */
@@ -310,6 +314,8 @@ export class ResultScreen extends Container implements AppScreen {
     private _footer!: Graphics;
     private _playBtn!: PrimaryButton;
     private _backBtn!: IconButton;
+    /** The game mode from the last played game. */
+    private _mode: GameMode = 'endless';
 
     constructor() {
         super();
@@ -337,6 +343,8 @@ export class ResultScreen extends Container implements AppScreen {
      * @param data - An object containing data specific to this screen.
      */
     public prepare(data: ResultsData) {
+        // Store the mode so the play button can navigate to the correct screen
+        this._mode = data.mode ?? 'endless';
         // Update the details data
         this._resultsPanel.updateData(data);
     }
@@ -415,8 +423,12 @@ export class ResultScreen extends Container implements AppScreen {
         });
 
         this._playBtn.onPress.connect(() => {
-            // Go to game screen when user presses play button
-            navigation.goToScreen(GameScreen);
+            // Go to the correct game screen based on the last played mode
+            if (this._mode === 'time-attack') {
+                navigation.goToScreen(TimeAttackGameScreen);
+            } else {
+                navigation.goToScreen(EndlessGameScreen);
+            }
         });
 
         this._backBtn = new IconButton('icon-back', 1);

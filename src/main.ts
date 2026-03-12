@@ -4,7 +4,7 @@ import { initAssets } from './assets';
 import { audio, bgm } from './audio';
 import { designConfig } from './game/designConfig';
 import { navigation } from './navigation';
-import { GameScreen } from './screens/GameScreen';
+import { EndlessGameScreen } from './screens/EndlessGameScreen';
 import { LoadScreen } from './screens/LoadScreen';
 import { TitleScreen } from './screens/TitleScreen';
 import { storage } from './storage';
@@ -94,7 +94,7 @@ async function init() {
     // This is used for debugging
     if (getUrlParam('play') !== null) {
         await Assets.loadBundle(TitleScreen.assetBundles);
-        await navigation.goToScreen(GameScreen);
+        await navigation.goToScreen(EndlessGameScreen);
     } else if (getUrlParam('loading') !== null) {
         await navigation.goToScreen(LoadScreen);
     } else {

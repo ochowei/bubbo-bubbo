@@ -13,8 +13,8 @@ export class GameScreen extends Container implements AppScreen {
     /** An array of bundle IDs for dynamic asset loading. */
     public static assetBundles = ['game-screen'];
 
-    private readonly _background: TilingSprite;
-    private readonly _game: Game;
+    protected readonly _background: TilingSprite;
+    protected readonly _game: Game;
 
     constructor() {
         super();
