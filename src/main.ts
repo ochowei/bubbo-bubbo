@@ -17,8 +17,9 @@ let hasInteracted = false;
 
 /** Set up a resize function for the app */
 function resize() {
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
+    // Use visualViewport when available (more accurate on mobile, accounts for on-screen keyboard)
+    const windowWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+    const windowHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     const minWidth = designConfig.content.width;
     const minHeight = designConfig.content.height;
 
@@ -34,9 +35,8 @@ function resize() {
     app.renderer.canvas.style.height = `${windowHeight}px`;
     window.scrollTo(0, 0);
 
-    // Update renderer  and navigation screens dimensions
+    // Update renderer and navigation screens dimensions
     app.renderer.resize(width, height);
-    navigation.init();
     navigation.resize(width, height);
 }
 
@@ -51,8 +51,21 @@ async function init() {
     // Add pixi canvas element to the document's body
     document.body.appendChild(app.canvas);
 
+    // Initialise navigation stage containers once after the app is ready
+    navigation.init();
+
     // Whenever the window resizes, call the 'resize' function
     window.addEventListener('resize', resize);
+
+    // Also listen to visualViewport resize for accurate dimensions on mobile (e.g. soft keyboard)
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', resize);
+    }
+
+    // Orientation change fires before the new dimensions are settled; resize after a short delay
+    window.addEventListener('orientationchange', () => {
+        setTimeout(resize, 100);
+    });
 
     // Trigger the first resize
     resize();
