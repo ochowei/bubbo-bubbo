@@ -1,6 +1,5 @@
 import { navigation } from '../../navigation';
 import { PauseOverlay } from '../../screens/overlays/PauseOverlay';
-import { TitleScreen } from '../../screens/TitleScreen';
 import { removeFromArray } from '../../utils/utils';
 import type { Game } from '../Game';
 import type { System } from '../SystemRunner';
@@ -135,6 +134,8 @@ export class PauseSystem implements System {
         if (state === 'resume') this.resume();
         else {
             // Exit the game if that is the intent
+            const { TitleScreen } = await import('../../screens/TitleScreen');
+
             navigation.goToScreen(TitleScreen);
         }
     }

@@ -6,7 +6,8 @@ import type { AppScreen } from '../navigation';
 import { navigation } from '../navigation';
 import { SecondaryButton } from '../ui/buttons/SecondaryButton';
 import { i18n } from '../utils/i18n';
-import { GameScreen } from './GameScreen';
+import { EndlessGameScreen } from './EndlessGameScreen';
+import { TimeAttackGameScreen } from './TimeAttackGameScreen';
 import { TitleScreen } from './TitleScreen';
 
 /** The game modes available for selection. */
@@ -76,7 +77,7 @@ export class ModeSelectionScreen extends Container implements AppScreen {
         // Endless
         this._endlessBtn = new SecondaryButton({ text: i18n.t('modeEndless'), tint: 0x49c8ff });
         this._endlessBtn.onPress.connect(() => {
-            navigation.goToScreen(GameScreen, { mode: 'endless' as GameMode });
+            navigation.goToScreen(EndlessGameScreen);
         });
         this._endlessDesc = new Text({ text: i18n.t('modeEndlessDesc'), style: DESC_STYLE });
         this._endlessDesc.anchor.set(0, 0.5);
@@ -90,7 +91,7 @@ export class ModeSelectionScreen extends Container implements AppScreen {
             textStyle: { fontSize: 33 },
         });
         this._timeAttackBtn.onPress.connect(() => {
-            navigation.goToScreen(GameScreen, { mode: 'time-attack' as GameMode });
+            navigation.goToScreen(TimeAttackGameScreen);
         });
         this._timeAttackDesc = new Text({ text: i18n.t('modeTimeAttackDesc'), style: DESC_STYLE });
         this._timeAttackDesc.anchor.set(0, 0.5);
