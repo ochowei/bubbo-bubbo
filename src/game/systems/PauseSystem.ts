@@ -21,13 +21,18 @@ export class PauseSystem implements System {
     private readonly _tweenList: Tween[] = [];
     /** A reference to a bound visibility function */
     private _visibilityPauseBound!: () => void;
+    /** A reference to a bound keyboard function */
+    private _escapePauseBound!: (event: KeyboardEvent) => void;
 
     /** Called at the start of the game. */
     public start() {
         // Assigns the bound function reference
         this._visibilityPauseBound = this._visibilityPause.bind(this);
+        this._escapePauseBound = this._escapePause.bind(this);
         // Add the event listener so the game will pause when it is no longer visible
         document.addEventListener('visibilitychange', this._visibilityPauseBound);
+        // Add keyboard listener so ESC can toggle pause
+        document.addEventListener('keydown', this._escapePauseBound);
     }
 
     /**
@@ -51,6 +56,7 @@ export class PauseSystem implements System {
     public end() {
         // Remove the event listener so it doesn't trigger outside of the game screen.
         document.removeEventListener('visibilitychange', this._visibilityPauseBound);
+        document.removeEventListener('keydown', this._escapePauseBound);
     }
 
     /** Resets the state of the system back to its initial state. */
@@ -124,6 +130,14 @@ export class PauseSystem implements System {
         if (document.visibilityState !== 'visible') {
             if (!this.isPaused) this.pause();
         }
+    }
+
+    /** Pause or resume the game with the ESC key. */
+    private _escapePause(event: KeyboardEvent) {
+        if (event.key !== 'Escape' || this.game.isGameOver || event.repeat) return;
+
+        if (this.isPaused) this._pauseCallback('resume');
+        else this.pause();
     }
 
     /** A callback function to help determine user intent */
